@@ -43,8 +43,9 @@ def do_it(place_holder=0):
 
         waveform[-fade_amount:] *= fade
         waveform = np.int16(waveform * 32767)
-        # Delay for 1 channel
+        # Delay for 1 channel.
         waveform2 = np.roll(waveform, roll_amount, axis=None)
+        # NO! leave them in maaaan.
         waveform3 = np.vstack((waveform2, waveform)).T
         notes.append(waveform3.copy(order='C'))
 
