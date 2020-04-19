@@ -82,72 +82,77 @@ def binders(la):
     master.bind(f"<{la}>", play_it)
 
 
-keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
-        'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
+try:
+    keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
+            'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
 
-sample_rate = 44100
-fade_amount = 8000
-fade = np.linspace(1, 0, fade_amount)
+    sample_rate = 44100
+    fade_amount = 8000
+    fade = np.linspace(1, 0, fade_amount)
 
-master = tk.Tk()
-master.geometry('700x500')
-master.configure(padx=20, pady=20)
-master.title("1/4 Dead in E4")
+    master = tk.Tk()
+    master.geometry('700x500')
+    master.configure(padx=20, pady=20)
+    master.title("1/4 Dead in E4")
 
-stop_flag = tk.BooleanVar()
-stop_flag.set(False)
+    stop_flag = tk.BooleanVar()
+    stop_flag.set(False)
 
-for key in keys:
-    binders(f'{key}')
-master.bind("<ButtonRelease-1>", do_it)
+    for key in keys:
+        binders(f'{key}')
+    master.bind("<ButtonRelease-1>", do_it)
 
-duration_label = tk.Label(master, text='Duration')
-freq5_label = tk.Label(master, text='Detune')
-f1_label = tk.Label(master, text='Sine Octave')
-ramp_label = tk.Label(master, text='Ramp')
-roll_label = tk.Label(master, text='Delay')
-sm_label = tk.Label(master, text='Sine')
-tm_label = tk.Label(master, text='Triangle')
+    duration_label = tk.Label(master, text='Duration')
+    freq5_label = tk.Label(master, text='Detune')
+    f1_label = tk.Label(master, text='Sine Octave')
+    ramp_label = tk.Label(master, text='Ramp')
+    roll_label = tk.Label(master, text='Delay')
+    sm_label = tk.Label(master, text='Sine')
+    tm_label = tk.Label(master, text='Triangle')
 
-scale_duration = tk.Scale(master, from_=0.2, to=5.0, resolution=0.2,
-                          orient=tk.HORIZONTAL, length=200)
-scale_freq5 = tk.Scale(master, from_=0.0, to=13.0,
-                       resolution=0.2, orient=tk.HORIZONTAL, length=200)
-scale_f1 = tk.Scale(master, from_=220, to=440,
-                    resolution=220, orient=tk.HORIZONTAL, length=50)
-scale_ramp = tk.Scale(master, from_=0.0, to=2.0,
-                      resolution=0.01, orient=tk.HORIZONTAL, length=200)
-scale_roll = tk.Scale(master, from_=0, to=4000,
-                      resolution=50, orient=tk.HORIZONTAL, length=200)
-scale_st = tk.Scale(master, from_=0.0, to=1.0,
-                    resolution=0.005, orient=tk.HORIZONTAL, length=200)
+    scale_duration = tk.Scale(master, from_=0.2, to=5.0, resolution=0.2,
+                              orient=tk.HORIZONTAL, length=200)
+    scale_freq5 = tk.Scale(master, from_=0.0, to=13.0,
+                           resolution=0.2, orient=tk.HORIZONTAL, length=200)
+    scale_f1 = tk.Scale(master, from_=220, to=440,
+                        resolution=220, orient=tk.HORIZONTAL, length=50)
+    scale_ramp = tk.Scale(master, from_=0.0, to=2.0,
+                          resolution=0.01, orient=tk.HORIZONTAL, length=200)
+    scale_roll = tk.Scale(master, from_=0, to=4000,
+                          resolution=50, orient=tk.HORIZONTAL, length=200)
+    scale_st = tk.Scale(master, from_=0.0, to=1.0,
+                        resolution=0.005, orient=tk.HORIZONTAL, length=200)
 
-stop_it_button = tk.Button(master, text='Stop', width=7, command=stop_it)
-toggle_button = tk.Button(master, text='Mono',
-                           bg="#000000", fg="white", width=7, command=toggle_flag)
-scale_duration.set(1.0)
-scale_freq5.set(2.2)
-scale_f1.set(440)
-scale_ramp.set(0.25)
-scale_roll.set(600)
+    stop_it_button = tk.Button(master, text='Stop', width=7, command=stop_it)
+    toggle_button = tk.Button(master, text='Mono',
+                               bg="#000000", fg="white", width=7, command=toggle_flag)
+    scale_duration.set(1.0)
+    scale_freq5.set(2.2)
+    scale_f1.set(440)
+    scale_ramp.set(0.25)
+    scale_roll.set(600)
 
-duration_label.grid(row=0, column=0)
-freq5_label.grid(row=1, column=0)
-f1_label.grid(row=2, column=0)
-ramp_label.grid(row=3, column=0)
-roll_label.grid(row=4, column=0)
-sm_label.grid(row=5, column=0)
-tm_label.grid(row=5, column=2, sticky='w')
+    duration_label.grid(row=0, column=0)
+    freq5_label.grid(row=1, column=0)
+    f1_label.grid(row=2, column=0)
+    ramp_label.grid(row=3, column=0)
+    roll_label.grid(row=4, column=0)
+    sm_label.grid(row=5, column=0)
+    tm_label.grid(row=5, column=2, sticky='w')
 
 
-scale_duration.grid(row=0, column=1)
-scale_freq5.grid(row=1, column=1)
-scale_f1.grid(row=2, column=1, sticky='w')
-scale_ramp.grid(row=3, column=1)
-scale_roll.grid(row=4, column=1)
-scale_st.grid(row=5, column=1)
-stop_it_button.grid(row=0, column=2, padx=20)
-toggle_button.grid(row=2, column=2, padx=20)
+    scale_duration.grid(row=0, column=1)
+    scale_freq5.grid(row=1, column=1)
+    scale_f1.grid(row=2, column=1, sticky='w')
+    scale_ramp.grid(row=3, column=1)
+    scale_roll.grid(row=4, column=1)
+    scale_st.grid(row=5, column=1)
+    stop_it_button.grid(row=0, column=2, padx=20)
+    toggle_button.grid(row=2, column=2, padx=20)
 
-key_notes = do_it()
-master.mainloop()
+    key_notes = do_it()
+    master.mainloop()
+except KeyboardInterrupt:
+    print(' The End')
+except Exception as e:
+    print(f'{type(e).__name__}: {str(e)}')
