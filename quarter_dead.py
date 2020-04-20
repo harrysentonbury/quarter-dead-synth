@@ -34,9 +34,10 @@ def do_it(place_holder=0):
 
     notes = []
     for i in range(-9, 6):
-        waveform_mod = sine_wave(freq1 * (2**(1.0 * i / 12.0)))
-        waveform = sine_wave(freq1 * (2**(1.0 * i / 12.0)))
-        waveform_detune = sine_wave(freq1 * (2**(1.0 * i / 12.0)), freq5)
+        factor = (2**(i / 12.0))
+        waveform_mod = sine_wave(freq1 * factor)
+        waveform = sine_wave(freq1 * factor)
+        waveform_detune = sine_wave((freq1 * factor), freq5)
 
         waveform = ((waveform + waveform_detune) *
                     (waveform_mod / 2 + 0.5)) * 0.1

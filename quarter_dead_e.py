@@ -41,24 +41,21 @@ def do_it(place_holder=0):
 
     x = np.linspace(0, 2 * np.pi * duration, int(duration * sample_rate))
     ramp_0 = np.logspace(1, 0, np.size(x), base=10) * ramp_amount
-    # ramp_1 = np.logspace(0, 1, np.size(x), base=5)
 
     notes = []
     for i in range(-5, 10):
-        waveform_mod = (sine_wave(freq1 * (
-            2**(1.0 * i / 12.0))) * sm) + (triangle(freq3 * (2**(1.0 * i / 12.0)), freq5) * tm)
-        waveform = (sine_wave(
-            freq1 * (2**(1.0 * i / 12.0))) * sm) + (triangle(freq3 * (2**(1.0 * i / 12.0))) * tm)
-        waveform_detune = (sine_wave(
-            freq1 * (2**(1.0 * i / 12.0)), freq5) * sm) + (
-            triangle(freq3 * (2**(1.0 * i / 12.0))) * tm)
+        factor = (2**(i / 12.0))
+        waveform_mod = (sine_wave(freq1 * factor) * sm) + \
+            (triangle(freq3 * factor, freq5) * tm)
+        waveform = (sine_wave(freq1 * factor) * sm) + \
+            (triangle(freq3 * factor) * tm)
+        waveform_detune = (sine_wave(freq1 * factor, freq5)
+                           * sm) + (triangle(freq3 * factor) * tm)
 
         waveform = ((waveform + waveform_detune) *
                     (waveform_mod / 2 + 0.5)) * 0.1
 
         waveform[-fade_amount:] *= fade
-        # waveform *= 32767 / np.max(np.abs(waveform) - 1)
-        # waveform = waveform.astype(np.int16)
         waveform = np.int16(waveform * 32767)
         waveform2 = np.roll(waveform, roll_amount, axis=None)
         waveform3 = np.vstack((waveform2, waveform)).T
@@ -121,11 +118,11 @@ try:
     scale_roll = tk.Scale(master, from_=0, to=4000,
                           resolution=50, orient=tk.HORIZONTAL, length=200)
     scale_st = tk.Scale(master, from_=0.0, to=1.0,
-                        resolution=0.005, orient=tk.HORIZONTAL, length=200)
+                        resolution=0.005, orient=tk.HORIZONTAL, length=200, showvalue=0)
 
     stop_it_button = tk.Button(master, text='Stop', width=7, command=stop_it)
     toggle_button = tk.Button(master, text='Mono',
-                               bg="#000000", fg="white", width=7, command=toggle_flag)
+                              bg="#000000", fg="white", width=7, command=toggle_flag)
     scale_duration.set(1.0)
     scale_freq5.set(2.2)
     scale_f1.set(440)
@@ -140,13 +137,12 @@ try:
     sm_label.grid(row=5, column=0)
     tm_label.grid(row=5, column=2, sticky='w')
 
-
     scale_duration.grid(row=0, column=1)
     scale_freq5.grid(row=1, column=1)
     scale_f1.grid(row=2, column=1, sticky='w')
     scale_ramp.grid(row=3, column=1)
     scale_roll.grid(row=4, column=1)
-    scale_st.grid(row=5, column=1)
+    scale_st.grid(row=5, column=1, pady=20)
     stop_it_button.grid(row=0, column=2, padx=20)
     toggle_button.grid(row=2, column=2, padx=20)
 
