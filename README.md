@@ -1,6 +1,6 @@
 # quarter-dead-synth
 
-### A bit of a synth you can play on your computer keyboard.
+### A bit of a synthesizer you can play on your computer keyboard.
 
 I called it quarter dead because that was the first tune that popped out
 of my fingers after I tapped a key and heard the first note. It uses
@@ -21,7 +21,7 @@ And, switch between monophonic and polyphonic.
 
 ![qde-layout](images/kb_e.jpg)
 
-## python3.7
+## python3.7 +
 
 ### Linux prerequisites for simpleaudio
 
