@@ -43,3 +43,5 @@ Also tkinter.
 ```
 sudo apt-get install python-tk
 ```
+
+![qdgui-layout](images/qds_gui.jpg)
