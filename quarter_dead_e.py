@@ -83,7 +83,7 @@ try:
     keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
             'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
 
-    sample_rate = 44100
+    sample_rate = 48000
     fade_amount = 8000
     fade = np.linspace(1, 0, fade_amount)
 
