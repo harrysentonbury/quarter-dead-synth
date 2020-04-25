@@ -5,7 +5,8 @@
 I called it quarter dead because that was the first tune that popped out
 of my fingers after I tapped a key and heard the first note. It uses
 simpleaudio, its a fantastic package, I just discovered it. I am pretty
-sure you need at least python 3.7 to use it. Also numpy, and tkinter for the GUI.
+sure you need at least python 3.7 to use it (officially supported).  
+Also numpy, and tkinter for the GUI.
 The quarter-dead-synth has detune functionality, Switch between two octaves.
 Adjustable FM modifying ramp intensity. There is a delay slider to
 delay the left channel but, -there is a surprise!
@@ -45,3 +46,6 @@ sudo apt-get install python-tk
 ```
 
 ![qdgui-layout](images/qds_gui.jpg)
+
+This features on my webpage, the link is [here](https://pythonaudiosynthesisbasics.com/two.html),
+but you must only visit at midnight.
