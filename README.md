@@ -2,6 +2,9 @@
 
 ### A bit of a synthesizer you can play on your computer keyboard.
 
+**Note:- This is a quick and dirty orrible synth and not all computers are going
+to deliver the goods in pristine condition.**
+
 I called it quarter dead because that was the first tune that popped out
 of my fingers after I tapped a key and heard the first note. It uses
 simpleaudio, its a fantastic package, I just discovered it. I am pretty
