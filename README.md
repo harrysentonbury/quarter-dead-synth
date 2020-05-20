@@ -4,7 +4,7 @@
 
 **Note:- This is a quick and dirty orrible synth and not all computers are going
 to deliver the goods in pristine condition. If this is the case,
-use the Emergency-version _(Probably how a real programmer would code it,
+use the [Emergency-version](Emergency-version/README.md) _(Probably how a real programmer would code it,
 but it does not sound as good)_**
 
 I called it quarter dead because that was the first tune that popped out
