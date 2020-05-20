@@ -3,7 +3,9 @@
 ### A bit of a synthesizer you can play on your computer keyboard.
 
 **Note:- This is a quick and dirty orrible synth and not all computers are going
-to deliver the goods in pristine condition.**
+to deliver the goods in pristine condition. If this is the case,
+use the Emergency-version _(Probably how a real programmer would code it,
+but it does not sound as good)_**
 
 I called it quarter dead because that was the first tune that popped out
 of my fingers after I tapped a key and heard the first note. It uses
