@@ -3,7 +3,7 @@
 **Disadvantages**
   - It is monophonic only.
   - Does not sound as good.
-  - Hmmmm latency.
+  - Hmmmm, latency. If you need a large blocksize.
 
 **Advantages**
   - It can be recorded with audacity and the like.
