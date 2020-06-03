@@ -2,14 +2,14 @@
 
 import numpy as np
 import simpleaudio as sa
+from concurrent.futures import ThreadPoolExecutor
 import tkinter as tk
 
 
 def play_it(event):
     if stop_flag.get() is False:
         sa.stop_all()
-    sound = key_notes.get(event.char)
-    play_obj = sa.play_buffer(sound, 2, 2, sample_rate)
+    play_obj = sa.play_buffer(key_notes.get(event.char), 2, 2, sample_rate)
 
 
 def stop_it():
@@ -17,6 +17,25 @@ def stop_it():
 
 
 def do_it(place_holder=0):
+
+    def wave_maker(a):
+        factor = (2**(a / 12.0))
+        waveform_mod = (sine_wave(freq1 * factor) * sm) + \
+            (triangle(freq3 * factor, freq5) * tm)
+        waveform = (sine_wave(freq1 * factor) * sm) + \
+            (triangle(freq3 * factor) * tm)
+        waveform_detune = (sine_wave(freq1 * factor, freq5)
+                           * sm) + (triangle(freq3 * factor) * tm)
+
+        waveform = ((waveform + waveform_detune) *
+                    (waveform_mod / 2 + 0.5)) * 0.1
+
+        waveform[-fade_amount:] *= fade
+        waveform = np.int16(waveform * 32767)
+        waveform2 = np.roll(waveform, roll_amount, axis=None)
+        waveform3 = np.vstack((waveform2, waveform)).T
+        waveform3 = (waveform3.copy(order='C'))
+        return waveform3
 
     def sine_wave(f, detune=0.0):
         y = np.sin((f + detune) * x + ramp_0 *
@@ -43,23 +62,8 @@ def do_it(place_holder=0):
     ramp_0 = np.logspace(1, 0, np.size(x), base=10) * ramp_amount
 
     notes = []
-    for i in range(-5, 10):
-        factor = (2**(i / 12.0))
-        waveform_mod = (sine_wave(freq1 * factor) * sm) + \
-            (triangle(freq3 * factor, freq5) * tm)
-        waveform = (sine_wave(freq1 * factor) * sm) + \
-            (triangle(freq3 * factor) * tm)
-        waveform_detune = (sine_wave(freq1 * factor, freq5)
-                           * sm) + (triangle(freq3 * factor) * tm)
-
-        waveform = ((waveform + waveform_detune) *
-                    (waveform_mod / 2 + 0.5)) * 0.1
-
-        waveform[-fade_amount:] *= fade
-        waveform = np.int16(waveform * 32767)
-        waveform2 = np.roll(waveform, roll_amount, axis=None)
-        waveform3 = np.vstack((waveform2, waveform)).T
-        notes.append(waveform3.copy(order='C'))
+    with ThreadPoolExecutor() as executor:
+        notes = list(executor.map(wave_maker, range(-5, 10)))
 
     global key_notes
     key_notes = dict(zip(keys, notes))
