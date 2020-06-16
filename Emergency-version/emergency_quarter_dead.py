@@ -37,6 +37,10 @@ def do_it(place_holder=0):
                                          np.sin(((f + detune) * 0.5) * x + (np.sin(((f + detune) * fm) * x) * 0.5))))
         return y * 0.8
 
+    def trem():
+        trem_adder = 1.0 - trem_amount
+        return np.sin(x * 6.0) * trem_amount + trem_adder
+
     fm = 0.25
     freq3 = 440.0
     freq5 = float(scale_freq5.get())
@@ -47,10 +51,14 @@ def do_it(place_holder=0):
     st = float(scale_st.get())
     tm = st * 1.2
     sm = 1 - st
+    trem_amount = float(scale_trem.get())
 
     x = np.linspace(0, 2 * np.pi * duration,
                     int(duration * sample_rate))
     ramp_0 = np.logspace(1, 0, np.size(x), base=10) * ramp_amount
+    attak = np.linspace(0, 1, int(np.size(x) * float(scale_attak.get())))
+    fade = np.linspace(1, 0, int(
+        np.size(x) * float(scale_fade.get())) + 1)
 
     notes = []
     for i in range(-5, 10):
@@ -70,9 +78,17 @@ def do_it(place_holder=0):
             extra = np.zeros(blocksize - leftover)
             waveform = np.concatenate((waveform, extra))
 
-        waveform[-fade_amount:] *= fade
+        waveform[:np.size(attak)] *= attak
+        waveform[-np.size(fade):] *= fade
         waveform2 = np.roll(waveform, roll_amount, axis=None)
         waveform3 = np.vstack((waveform2, waveform)).T
+        if trem_flag.get() is True:
+            trem_data = trem().reshape(-1, 1)
+            if leftover != 0:
+                waveform3 = waveform3 * \
+                    np.concatenate((trem_data, extra.reshape(-1, 1)))
+            else:
+                waveform3 = waveform3 * trem_data
         notes.append(waveform3)
 
     global key_notes
@@ -108,6 +124,15 @@ def gen():
         sound = sound[blocksize:, :]
 
 
+def toggle_trem():
+    trem_flag.set(not trem_flag.get())
+    if trem_flag.get() is True:
+        trem_button.config(bg="#728C00", fg="white", text="Trem On")
+    else:
+        trem_button.config(bg="#000000", fg="white", text="Tremelo")
+    do_it()
+
+
 def binders(la):
     master.bind(f"<{la}>", play_it)
 
@@ -130,6 +155,8 @@ try:
     master.geometry('700x500')
     master.configure(padx=20, pady=20)
     master.title("1/4 Dead Emergency")
+    trem_flag = tk.BooleanVar()
+    trem_flag.set(False)
 
     for key in keys:
         binders(f'{key}')
@@ -142,6 +169,9 @@ try:
     roll_label = tk.Label(master, text='Delay')
     sm_label = tk.Label(master, text='Sine')
     tm_label = tk.Label(master, text='Triangle')
+    attak_label = tk.Label(master, text='Attack')
+    fade_label = tk.Label(master, text='Fade')
+    trem_label = tk.Label(master, text='Tremelo')
 
     scale_duration = tk.Scale(master, from_=0.2, to=3.0, resolution=0.2,
                               orient=tk.HORIZONTAL, length=200)
@@ -155,7 +185,14 @@ try:
                           resolution=50, orient=tk.HORIZONTAL, length=200)
     scale_st = tk.Scale(master, from_=0.0, to=1.0,
                         resolution=0.005, orient=tk.HORIZONTAL, length=200, showvalue=0)
-
+    scale_attak = tk.Scale(master, from_=0.0, to=1.0,
+                           resolution=0.02, orient=tk.VERTICAL, length=130)
+    scale_fade = tk.Scale(master, from_=0.01, to=1.0,
+                          resolution=0.01, orient=tk.VERTICAL, length=130)
+    scale_trem = tk.Scale(master, from_=0.0, to=0.5, resolution=0.02,
+                          orient=tk.HORIZONTAL, length=200)
+    trem_button = tk.Button(master, bg="#000000", fg="white", text='Tremelo',
+                            width=7, command=toggle_trem)
     close_button = tk.Button(master, text='Close', width=7, command=stop_it)
 
     scale_duration.set(1.0)
@@ -171,6 +208,7 @@ try:
     roll_label.grid(row=4, column=0)
     sm_label.grid(row=5, column=0)
     tm_label.grid(row=5, column=2, sticky='w')
+    trem_label.grid(row=6, column=0)
 
     scale_duration.grid(row=0, column=1)
     scale_freq5.grid(row=1, column=1)
@@ -178,7 +216,15 @@ try:
     scale_ramp.grid(row=3, column=1)
     scale_roll.grid(row=4, column=1)
     scale_st.grid(row=5, column=1, pady=20)
+    scale_trem.grid(row=6, column=1)
+    trem_button.grid(row=1, column=2, padx=20)
     close_button.grid(row=6, column=2, padx=20)
+
+    attak_label.grid(row=0, column=3)
+    fade_label.grid(row=0, column=4)
+
+    scale_attak.grid(row=1, column=3, rowspan=3)
+    scale_fade.grid(row=1, column=4, rowspan=3)
 
     key_notes = do_it()
     master.protocol("WM_DELETE_WINDOW", on_closing)
