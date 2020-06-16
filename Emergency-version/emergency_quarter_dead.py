@@ -200,6 +200,7 @@ try:
     scale_f1.set(440)
     scale_ramp.set(0.25)
     scale_roll.set(600)
+    scale_trem.set(0.46)
 
     duration_label.grid(row=0, column=0)
     freq5_label.grid(row=1, column=0)
