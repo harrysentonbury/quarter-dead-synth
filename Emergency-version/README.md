@@ -3,11 +3,12 @@
 **Disadvantages**
   - It is monophonic only.
   - Does not sound as good.
-  - Hmmmm, latency. If you need a large blocksize.
 
 **Advantages**
   - It can be recorded with audacity and the like.
   - Probably works on all computers.
+  - Its got tremelo.
+  - Its got attack and fade.
 
 This one uses sounddevice instead of simpleaudio.
 It uses a callback function that streams zeros if no key
@@ -26,3 +27,5 @@ Also tkinter.
 ```
 sudo apt-get install python-tk
 ```
+
+![eqds-layout](../images/eqds.jpg)
