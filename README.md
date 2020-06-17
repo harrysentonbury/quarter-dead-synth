@@ -47,5 +47,7 @@ to deliver the goods in pristine condition. If this is the case,
 use the [Emergency-version](Emergency-version/) _(Probably how a real programmer would code it,
 but it does not sound as good)_ Its in the emergency version directory**
 
+Listen to these synths on this video : [https://youtu.be/WFZZJfIEdT4](https://youtu.be/WFZZJfIEdT4).
+
 This project features on my webpage, the link is [here](https://pythonaudiosynthesisbasics.com/two.html),
 but you must only visit at midnight.
