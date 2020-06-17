@@ -29,3 +29,5 @@ sudo apt-get install python-tk
 ```
 
 ![eqds-layout](../images/eqds.jpg)
+
+Listen to these synths on this video : [https://youtu.be/WFZZJfIEdT4](https://youtu.be/WFZZJfIEdT4).
