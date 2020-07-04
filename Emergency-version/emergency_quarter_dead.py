@@ -52,6 +52,10 @@ def do_it(place_holder=0):
     tm = st * 1.2
     sm = 1 - st
     trem_amount = float(scale_trem.get())
+    if key_change_bool[0] is True:
+        num_range = c_range
+    else:
+        num_range = e_range
 
     x = np.linspace(0, 2 * np.pi * duration,
                     int(duration * sample_rate))
@@ -61,7 +65,7 @@ def do_it(place_holder=0):
         np.size(x) * float(scale_fade.get())) + 1)
 
     notes = []
-    for i in range(-5, 10):
+    for i in num_range:
         factor = (2**(i / 12.0))
         waveform_mod = (sine_wave(freq1 * factor) * sm) + \
             (triangle(freq3 * factor, freq5) * tm)
@@ -133,16 +137,42 @@ def toggle_trem():
     do_it()
 
 
+def change_key():
+    key_change_bool[0] = not key_change_bool[0]
+    if key_change_bool[0] is True:
+        keys[:] = c_keys[:]
+        key_change_button.config(bg="#728C00", fg="white", text='Key of C4')
+    else:
+        keys[:] = e_keys[:]
+        key_change_button.config(bg="#000000", fg="white", text='key of E4')
+    for key in unbinders:
+        master.unbind(f'<{key}>')
+    for key in keys:
+        binders(f'{key}')
+    do_it()
+
+
 def binders(la):
     master.bind(f"<{la}>", play_it)
 
 
 try:
-    keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
-            'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
+    e_keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
+              'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
+
+    c_keys = ['a', 'w', 's', 'e', 'd', 'f', 't',
+              'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l']
+
+    unbinders = ['w', 'r', 'y', 'i', 'o', 'p']
+
+    keys = []
+    keys[:] = e_keys[:]
+    c_range = range(-9, 6)
+    e_range = range(-5, 10)
+    key_change_bool = [False]
 
     sample_rate = 48000
-    blocksize = 256
+    blocksize = 128
     fade_amount = 6000
     flag = True
     sound = np.zeros((blocksize, 2))
@@ -173,7 +203,7 @@ try:
     fade_label = tk.Label(master, text='Fade')
     trem_label = tk.Label(master, text='Tremelo')
 
-    scale_duration = tk.Scale(master, from_=0.2, to=3.0, resolution=0.2,
+    scale_duration = tk.Scale(master, from_=0.1, to=3.0, resolution=0.1,
                               orient=tk.HORIZONTAL, length=200)
     scale_freq5 = tk.Scale(master, from_=0.0, to=13.0,
                            resolution=0.2, orient=tk.HORIZONTAL, length=200)
@@ -193,6 +223,8 @@ try:
                           orient=tk.HORIZONTAL, length=200)
     trem_button = tk.Button(master, bg="#000000", fg="white", text='Tremelo',
                             width=7, command=toggle_trem)
+    key_change_button = tk.Button(
+        master, text='Key of E4', bg="#000000", fg="white", command=change_key)
     close_button = tk.Button(master, text='Close', width=7, command=stop_it)
 
     scale_duration.set(1.0)
@@ -219,6 +251,7 @@ try:
     scale_st.grid(row=5, column=1, pady=20)
     scale_trem.grid(row=6, column=1)
     trem_button.grid(row=1, column=2, padx=20)
+    key_change_button.grid(row=4, column=2, padx=20)
     close_button.grid(row=6, column=2, padx=20)
 
     attak_label.grid(row=0, column=3)
