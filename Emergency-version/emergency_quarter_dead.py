@@ -103,7 +103,7 @@ def do_it(place_holder=0):
 def stream_func():
     def callback(outdata, frames, time, status):
         try:
-            data = next(block)
+            data = next(sound_slice)
             if flag == False:
                 raise sd.CallbackStop
             else:
@@ -172,11 +172,11 @@ try:
     key_change_bool = [False]
 
     sample_rate = 48000
-    blocksize = 128
+    blocksize = 256
     fade_amount = 6000
     flag = True
     sound = np.zeros((blocksize, 2))
-    block = gen()
+    sound_slice = gen()
     fade = np.linspace(1, 0, fade_amount)
     stream_thread = threading.Thread(target=stream_func)
     stream_thread.start()
