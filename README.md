@@ -44,8 +44,14 @@ sudo apt-get install python-tk
 
 **Note:- This is a quick and dirty orrible synth and not all computers are going
 to deliver the goods in pristine condition. If this is the case,
-use the [Emergency-version](Emergency-version/) _(Probably how a real programmer would code it,
-but it does not sound as good)_ Its in the emergency version directory**
+try the [Emergency-version](Emergency-version/) pictured below.**
+
+![qdgui-layout](images/eqds_tr0.jpg)
+
+I have tried both versions on a dell laptop with a
+dual core pentium running Debian on which it worked perfectly with no perceptible latency, however,
+on my daughters ryzen3 gaming computer running Mint, quarter_dead_e.py was a disaster and
+Emergency-version had a bit of latency.
 
 Listen to these synths on this video : [https://youtu.be/WFZZJfIEdT4](https://youtu.be/WFZZJfIEdT4).
 
