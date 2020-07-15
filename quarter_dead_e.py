@@ -16,6 +16,10 @@ def stop_it():
     sa.stop_all()
 
 
+def closing():
+    master.destroy()
+
+
 def do_it(place_holder=0):
 
     def wave_maker(a):
@@ -127,6 +131,7 @@ try:
     stop_it_button = tk.Button(master, text='Stop', width=7, command=stop_it)
     toggle_button = tk.Button(master, text='Mono',
                               bg="#000000", fg="white", width=7, command=toggle_flag)
+    close_button = tk.Button(master, text='Close', width=7, command=closing)
     scale_duration.set(1.0)
     scale_freq5.set(2.2)
     scale_f1.set(440)
@@ -149,6 +154,7 @@ try:
     scale_st.grid(row=5, column=1, pady=20)
     stop_it_button.grid(row=0, column=2, padx=20)
     toggle_button.grid(row=2, column=2, padx=20)
+    close_button.grid(row=6, column=2, padx=20)
 
     key_notes = do_it()
     master.mainloop()
