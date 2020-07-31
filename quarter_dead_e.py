@@ -24,11 +24,11 @@ def do_it(place_holder=0):
 
     def wave_maker(a):
         factor = (2**(a / 12.0))
-        waveform_mod = (sine_wave(freq1 * factor) * sm) + \
-            (triangle(freq3 * factor, freq5) * tm)
-        waveform = (sine_wave(freq1 * factor) * sm) + \
+        waveform_mod = (sine_wave(freq_octave * factor) * sm) + \
+            (triangle(freq3 * factor, freq_detune) * tm)
+        waveform = (sine_wave(freq_octave * factor) * sm) + \
             (triangle(freq3 * factor) * tm)
-        waveform_detune = (sine_wave(freq1 * factor, freq5)
+        waveform_detune = (sine_wave(freq_octave * factor, freq_detune)
                            * sm) + (triangle(freq3 * factor) * tm)
 
         waveform = ((waveform + waveform_detune) *
@@ -53,9 +53,9 @@ def do_it(place_holder=0):
 
     fm = 0.25
     freq3 = 440.0
-    freq5 = float(scale_freq5.get())
+    freq_detune = float(scale_detune.get())
     duration = float(scale_duration.get())
-    freq1 = float(scale_f1.get())
+    freq_octave = float(scale_octave.get())
     ramp_amount = float(scale_ramp.get())
     roll_amount = int(scale_roll.get())
     st = float(scale_st.get())
@@ -108,8 +108,8 @@ try:
     master.bind("<ButtonRelease-1>", do_it)
 
     duration_label = tk.Label(master, text='Duration')
-    freq5_label = tk.Label(master, text='Detune')
-    f1_label = tk.Label(master, text='Sine Octave')
+    detune_label = tk.Label(master, text='Detune')
+    octave_label = tk.Label(master, text='Sine Octave')
     ramp_label = tk.Label(master, text='Ramp')
     roll_label = tk.Label(master, text='Delay')
     sm_label = tk.Label(master, text='Sine')
@@ -117,10 +117,10 @@ try:
 
     scale_duration = tk.Scale(master, from_=0.2, to=5.0, resolution=0.2,
                               orient=tk.HORIZONTAL, length=200)
-    scale_freq5 = tk.Scale(master, from_=0.0, to=13.0,
-                           resolution=0.2, orient=tk.HORIZONTAL, length=200)
-    scale_f1 = tk.Scale(master, from_=220, to=440,
-                        resolution=220, orient=tk.HORIZONTAL, length=50)
+    scale_detune = tk.Scale(master, from_=0.0, to=13.0,
+                            resolution=0.2, orient=tk.HORIZONTAL, length=200)
+    scale_octave = tk.Scale(master, from_=220, to=440,
+                            resolution=220, orient=tk.HORIZONTAL, length=50)
     scale_ramp = tk.Scale(master, from_=0.0, to=2.0,
                           resolution=0.01, orient=tk.HORIZONTAL, length=200)
     scale_roll = tk.Scale(master, from_=0, to=4000,
@@ -133,22 +133,22 @@ try:
                               bg="#000000", fg="white", width=7, command=toggle_flag)
     close_button = tk.Button(master, text='Close', width=7, command=closing)
     scale_duration.set(1.0)
-    scale_freq5.set(2.2)
-    scale_f1.set(440)
+    scale_detune.set(2.2)
+    scale_octave.set(440)
     scale_ramp.set(0.25)
     scale_roll.set(600)
 
     duration_label.grid(row=0, column=0)
-    freq5_label.grid(row=1, column=0)
-    f1_label.grid(row=2, column=0)
+    detune_label.grid(row=1, column=0)
+    octave_label.grid(row=2, column=0)
     ramp_label.grid(row=3, column=0)
     roll_label.grid(row=4, column=0)
     sm_label.grid(row=5, column=0)
     tm_label.grid(row=5, column=2, sticky='w')
 
     scale_duration.grid(row=0, column=1)
-    scale_freq5.grid(row=1, column=1)
-    scale_f1.grid(row=2, column=1, sticky='w')
+    scale_detune.grid(row=1, column=1)
+    scale_octave.grid(row=2, column=1, sticky='w')
     scale_ramp.grid(row=3, column=1)
     scale_roll.grid(row=4, column=1)
     scale_st.grid(row=5, column=1, pady=20)
