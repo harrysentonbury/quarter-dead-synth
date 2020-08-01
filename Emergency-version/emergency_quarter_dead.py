@@ -27,6 +27,7 @@ def stop_it():
 
 
 def do_it(place_holder=0):
+    """creates a dictionary of key : notes"""
     def sine_wave(f, detune=0.0):
         y = np.sin((f + detune) * x + ramp_0 *
                    np.sin(((f + detune) * 0.5) * x + (np.sin(((f + detune) * fm) * x) * 0.5)))
@@ -100,7 +101,7 @@ def do_it(place_holder=0):
     return key_notes
 
 
-def stream_func():
+def stream_func(device=-1):
     def callback(outdata, frames, time, status):
         try:
             data = next(sound_slice)
@@ -111,7 +112,8 @@ def stream_func():
         except ValueError:
             outdata[:, :] = np.zeros((blocksize, 2))
 
-    stream = sd.OutputStream(channels=2, callback=callback, blocksize=blocksize,
+    device = device if device >= 0 else None
+    stream = sd.OutputStream(device=device, channels=2, callback=callback, blocksize=blocksize,
                              samplerate=sample_rate)
     with stream:
         while flag == True:
@@ -133,7 +135,7 @@ def toggle_trem():
     if trem_flag.get() is True:
         trem_button.config(bg="#728C00", fg="white", text="Trem On")
     else:
-        trem_button.config(bg="#000000", fg="white", text="Tremelo")
+        trem_button.config(bg="#000000", fg="white", text="tremolo")
     do_it()
 
 
@@ -156,6 +158,153 @@ def binders(la):
     master.bind(f"<{la}>", play_it)
 
 
+def message_win_func(mtitle, blah):
+
+    def closer():
+        ms_win.destroy()
+
+    global ms_win
+    ms_win = tk.Toplevel(master)
+    ms_win.title(mtitle)
+    label = tk.Label(ms_win, text=blah, font='Times 20')
+    button = tk.Button(ms_win, text='OK', width=6,
+                       bg="#728C00", fg="white", command=closer)
+    ms_win.bind('<Return>', lambda event=None: button.invoke())
+
+    label.pack(padx=30, pady=10)
+    button.pack(pady=20)
+    ms_win.lift()
+
+
+def message_win(mtitle, blah):
+    if ms_win is None:
+        message_win_func(mtitle, blah)
+        return
+    try:
+        ms_win.lift()
+    except tk.TclError:
+        message_win_func(mtitle, blah)
+
+
+def diagram_func():
+    """shows images of key bindings"""
+    def closer():
+        diagram_window.destroy()
+
+    global diagram_window
+    diagram_window = tk.Toplevel(master)
+    diagram_window.title('Diagram')
+    label_c = tk.Label(diagram_window, image=image_c)
+    label_e = tk.Label(diagram_window, image=image_e)
+    close_button = tk.Button(diagram_window, text='Close', command=closer)
+
+    label_c.grid(row=0, column=0, padx=20, pady=10)
+    label_e.grid(row=1, column=0, padx=20, pady=10)
+    close_button.grid(row=2, column=0)
+    diagram_window.lift()
+
+
+def diagram():
+    if diagram_window is None:
+        diagram_func()
+        return
+    try:
+        diagram_window.lift()
+    except tk.TclError:
+        diagram_func()
+
+
+def device_window_func():
+    """Output device dialog"""
+
+    def driver_setter():
+        if ms_win is not None:
+            ms_win.destroy()
+        num = list_bx.curselection()[0]
+        num_name = sd.query_devices()[num].get('name')
+        try:
+            check_driver = sd.check_output_settings(
+                device=num, channels=2, dtype='float32', samplerate=sample_rate)
+            device_num.set(num)
+            stream_restart()
+            message_win(
+                'Driver Set', '''Device number {} ({}) \n set as output device
+                '''.format(num, sd.query_devices()[num].get('name')))
+        except sd.PortAudioError:
+            message_win('sd.PortAudioError',
+                        'Device number {} ({}) \n is not supported. Try another'.format(num, num_name))
+
+    def reset_default():
+        device_num.set(-1)
+        stream_restart()
+        if ms_win is not None:
+            ms_win.destroy()
+        message_win("Default Device", "Device set to default")
+
+    def stream_restart():
+        global flag
+        flag = True
+        stream_thread = threading.Thread(
+            target=stream_func, args=[device_num.get()])
+        stream_thread.start()
+        device_window.destroy()
+
+    def on_closing_dw():
+        if messagebox.askokcancel('Question', 'Do you want to restart stream?'):
+            stream_restart()
+
+    global flag
+    flag = False
+    global device_window
+    device_window = tk.Toplevel(master)
+    device_window.title('Output Devices')
+    device_window.config(bg='#afb4b5')
+
+    query = repr(sd.query_devices())
+    query = query.split('\n')
+
+    frame_0 = tk.Frame(device_window, relief=tk.RAISED, bd=2, bg='#afb4b5')
+    label_0 = tk.Label(device_window, text='List of availible devices',
+                       bg='#afb4b5', font='Times 20')
+    scrollbar = tk.Scrollbar(device_window)
+    label_1 = tk.Label(
+        frame_0, text='Select output device then set', bg='#afb4b5', font='Times 15')
+    set_device_button = tk.Button(frame_0, text='Set', height=3, width=6, activebackground='#99c728',
+                                  bg="#728C00", fg="white", command=driver_setter)
+    reset_button = tk.Button(
+        device_window, text='Reset to Default Device', command=reset_default)
+    cancel_button = tk.Button(
+        device_window, text='Cancel', command=stream_restart)
+    list_bx = tk.Listbox(
+        device_window, yscrollcommand=scrollbar.set, width=60, height=25)
+    for i in range(len(query)):
+        list_bx.insert(tk.END, query[i])
+
+    label_0.grid(row=0, column=0, columnspan=2)
+    list_bx.grid(row=1, column=0, columnspan=3)
+    scrollbar.grid(row=1, column=3, sticky=tk.N + tk.S)
+    label_1.grid(row=2, column=0, sticky='ne', pady=8, padx=5)
+    frame_0.grid(row=2, column=0, rowspan=2, columnspan=2,
+                 sticky='w', pady=5, padx=20)
+    set_device_button.grid(row=3, column=1, pady=5, padx=5)
+    cancel_button.grid(row=3, column=2, sticky='w')
+    reset_button.grid(row=4, column=1, sticky='w', pady=8)
+    scrollbar.config(command=list_bx.yview)
+
+    device_window.protocol('WM_DELETE_WINDOW', on_closing_dw)
+    device_window.lift()
+
+
+def device_select():
+    if device_window is None:
+        device_window_func()
+        return
+    try:
+        device_window.lift()
+    except tk.TclError:
+        device_window_func()
+
+
 try:
     e_keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
               'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
@@ -175,6 +324,9 @@ try:
     blocksize = 256
     fade_amount = 6000
     flag = True
+    diagram_window = None
+    device_window = None
+    ms_win = None
     sound = np.zeros((blocksize, 2))
     sound_slice = gen()
     fade = np.linspace(1, 0, fade_amount)
@@ -187,10 +339,24 @@ try:
     master.title("1/4 Dead Emergency")
     trem_flag = tk.BooleanVar()
     trem_flag.set(False)
+    device_num = tk.IntVar()
+    device_num.set(-1)
 
     for key in keys:
         binders(f'{key}')
     master.bind("<ButtonRelease-1>", do_it)
+
+    menu_bar = tk.Menu(master)
+    menu_bar.add_command(label='Keyboard Diagram', command=diagram)
+    menu_bar.add_command(label='Output', command=device_select)
+    master.config(menu=menu_bar)
+
+    try:        # Runnig in Atom throws an error! (Script package)
+        image_c = tk.PhotoImage(file='media/kb_c.gif')
+        image_e = tk.PhotoImage(file='media/kb_e.gif')
+    except tk.TclError:     # But this works?
+        image_c = tk.PhotoImage(file='images/kb_c.gif')
+        image_e = tk.PhotoImage(file='images/kb_e.gif')
 
     duration_label = tk.Label(master, text='Duration')
     detune_label = tk.Label(master, text='Detune')
@@ -201,7 +367,7 @@ try:
     tm_label = tk.Label(master, text='Triangle')
     attak_label = tk.Label(master, text='Attack')
     fade_label = tk.Label(master, text='Fade')
-    trem_label = tk.Label(master, text='Tremelo')
+    trem_label = tk.Label(master, text='Tremolo')
 
     scale_duration = tk.Scale(master, from_=0.1, to=3.0, resolution=0.1,
                               orient=tk.HORIZONTAL, length=200)
@@ -221,10 +387,10 @@ try:
                           resolution=0.01, orient=tk.VERTICAL, length=130)
     scale_trem = tk.Scale(master, from_=0.0, to=0.5, resolution=0.02,
                           orient=tk.HORIZONTAL, length=200)
-    trem_button = tk.Button(master, bg="#000000", fg="white", text='Tremelo',
-                            width=7, command=toggle_trem)
     key_change_button = tk.Button(
         master, text='Key of E4', bg="#000000", fg="white", command=change_key)
+    trem_button = tk.Button(master, bg="#000000", fg="white", text='tremolo',
+                            width=7, command=toggle_trem)
     close_button = tk.Button(master, text='Close', width=7, command=stop_it)
 
     scale_duration.set(1.0)
@@ -250,9 +416,9 @@ try:
     scale_roll.grid(row=4, column=1)
     scale_st.grid(row=5, column=1, pady=20)
     scale_trem.grid(row=6, column=1)
-    trem_button.grid(row=1, column=2, padx=20)
-    key_change_button.grid(row=4, column=2, padx=20)
-    close_button.grid(row=6, column=2, padx=20)
+    trem_button.grid(row=6, column=2, padx=20)
+    key_change_button.grid(row=2, column=2, padx=20)
+    close_button.grid(row=7, column=2, padx=20, pady=20)
 
     attak_label.grid(row=0, column=3)
     fade_label.grid(row=0, column=4)
