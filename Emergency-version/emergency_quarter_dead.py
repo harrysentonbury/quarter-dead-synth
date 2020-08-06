@@ -10,9 +10,7 @@ from tkinter import messagebox
 
 def on_closing():
     if messagebox.askokcancel("Quit?", "Do You Want To Quit"):
-        master.destroy()
-        global flag
-        flag = False
+        stop_it()
 
 
 def play_it(event):
@@ -229,7 +227,7 @@ def device_window_func():
             stream_restart()
             message_win(
                 'Driver Set', '''Device number {} ({}) \n set as output device
-                '''.format(num, sd.query_devices()[num].get('name')))
+                '''.format(num, num_name))
         except sd.PortAudioError:
             message_win('sd.PortAudioError',
                         'Device number {} ({}) \n is not supported. Try another'.format(num, num_name))
