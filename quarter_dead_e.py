@@ -4,6 +4,7 @@ import numpy as np
 import simpleaudio as sa
 from concurrent.futures import ThreadPoolExecutor
 import tkinter as tk
+from tkinter import messagebox
 
 
 def play_it(event):
@@ -16,7 +17,13 @@ def stop_it():
     sa.stop_all()
 
 
+def on_closing():
+    if messagebox.askokcancel("Quit?", "Shure You Want To Quit"):
+        closing()
+
+
 def closing():
+    sa.stop_all()
     master.destroy()
 
 
@@ -157,6 +164,8 @@ try:
     close_button.grid(row=6, column=2, padx=20)
 
     key_notes = do_it()
+
+    master.protocol("WM_DELETE_WINDOW", on_closing)
     master.mainloop()
 except KeyboardInterrupt:
     print(' The End')
