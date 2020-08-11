@@ -4,6 +4,7 @@ import numpy as np
 import sounddevice as sd
 import threading
 import time
+import os
 import tkinter as tk
 from tkinter import messagebox
 
@@ -189,17 +190,21 @@ def diagram_func():
     def closer():
         diagram_window.destroy()
 
-    global diagram_window
-    diagram_window = tk.Toplevel(master)
-    diagram_window.title('Diagram')
-    label_c = tk.Label(diagram_window, image=image_c)
-    label_e = tk.Label(diagram_window, image=image_e)
-    close_button = tk.Button(diagram_window, text='Close', command=closer)
+    try:
+        global diagram_window
+        diagram_window = tk.Toplevel(master)
+        diagram_window.title('Diagram')
+        label_c = tk.Label(diagram_window, image=image_c)
+        label_e = tk.Label(diagram_window, image=image_e)
+        close_button = tk.Button(diagram_window, text='Close', command=closer)
 
-    label_c.grid(row=0, column=0, padx=20, pady=10)
-    label_e.grid(row=1, column=0, padx=20, pady=10)
-    close_button.grid(row=2, column=0)
-    diagram_window.lift()
+        label_c.grid(row=0, column=0, padx=20, pady=10)
+        label_e.grid(row=1, column=0, padx=20, pady=10)
+        close_button.grid(row=2, column=0)
+        diagram_window.lift()
+    except NameError as e:
+        diagram_window.destroy()
+        message_win(type(e).__name__, "No Diagrams Available")
 
 
 def diagram():
@@ -308,13 +313,13 @@ try:
               'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
 
     c_keys = ['a', 'w', 's', 'e', 'd', 'f', 't',
-              'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l']
+              'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p']
 
-    unbinders = ['w', 'r', 'y', 'i', 'o', 'p']
+    unbinders = ['w', 'r', 'y', 'i', 'o']
 
     keys = []
     keys[:] = e_keys[:]
-    c_range = range(-9, 6)
+    c_range = range(-9, 7)
     e_range = range(-5, 10)
     key_change_bool = [False]
 
@@ -353,8 +358,11 @@ try:
         image_c = tk.PhotoImage(file='media/kb_c.gif')
         image_e = tk.PhotoImage(file='media/kb_e.gif')
     except tk.TclError:     # But this works?
-        image_c = tk.PhotoImage(file='images/kb_c.gif')
-        image_e = tk.PhotoImage(file='images/kb_e.gif')
+        if os.path.exists('images/kb_c.gif') and os.path.exists('images/kb_e.gif'):
+            image_c = tk.PhotoImage(file='images/kb_c.gif')
+            image_e = tk.PhotoImage(file='images/kb_e.gif')
+        else:
+            print('no keyboard layout diagrams but who cares')
 
     duration_label = tk.Label(master, text='Duration')
     detune_label = tk.Label(master, text='Detune')
