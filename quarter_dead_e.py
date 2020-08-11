@@ -136,7 +136,7 @@ try:
                         resolution=0.005, orient=tk.HORIZONTAL, length=200, showvalue=0)
 
     stop_it_button = tk.Button(
-        master, text='Stop', width=7, command=stop_playing)
+        master, text='Stop', width=7, command=stop_play)
     toggle_button = tk.Button(master, text='Mono',
                               bg="#000000", fg="white", width=7, command=toggle_flag)
     close_button = tk.Button(master, text='Close', width=7, command=closing)
