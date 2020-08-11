@@ -7,17 +7,17 @@ import tkinter as tk
 from tkinter import messagebox
 
 
-def play_it(event):
+def play_note(event):
     if stop_flag.get() is False:
         sa.stop_all()
     play_obj = sa.play_buffer(key_notes.get(event.char), 2, 2, sample_rate)
 
 
-def stop_it():
+def stop_play():
     sa.stop_all()
 
 
-def on_closing():
+def on_quitting():
     if messagebox.askokcancel("Quit?", "Shure You Want To Quit"):
         closing()
 
@@ -27,7 +27,7 @@ def closing():
     master.destroy()
 
 
-def do_it(place_holder=0):
+def do_it_int16(place_holder=0):
 
     def wave_maker(a):
         factor = (2**(a / 12.0))
@@ -91,7 +91,7 @@ def toggle_flag():
 
 
 def binders(la):
-    master.bind(f"<{la}>", play_it)
+    master.bind(f"<{la}>", play_note)
 
 
 try:
@@ -112,7 +112,7 @@ try:
 
     for key in keys:
         binders(f'{key}')
-    master.bind("<ButtonRelease-1>", do_it)
+    master.bind("<ButtonRelease-1>", do_it_int16)
 
     duration_label = tk.Label(master, text='Duration')
     detune_label = tk.Label(master, text='Detune')
@@ -135,7 +135,8 @@ try:
     scale_st = tk.Scale(master, from_=0.0, to=1.0,
                         resolution=0.005, orient=tk.HORIZONTAL, length=200, showvalue=0)
 
-    stop_it_button = tk.Button(master, text='Stop', width=7, command=stop_it)
+    stop_it_button = tk.Button(
+        master, text='Stop', width=7, command=stop_playing)
     toggle_button = tk.Button(master, text='Mono',
                               bg="#000000", fg="white", width=7, command=toggle_flag)
     close_button = tk.Button(master, text='Close', width=7, command=closing)
@@ -163,9 +164,9 @@ try:
     toggle_button.grid(row=2, column=2, padx=20)
     close_button.grid(row=6, column=2, padx=20)
 
-    key_notes = do_it()
+    key_notes = do_it_int16()
 
-    master.protocol("WM_DELETE_WINDOW", on_closing)
+    master.protocol("WM_DELETE_WINDOW", on_quitting)
     master.mainloop()
 except KeyboardInterrupt:
     print(' The End')
