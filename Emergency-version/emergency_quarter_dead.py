@@ -21,8 +21,7 @@ def play_it(event):
 
 def stop_it():
     master.destroy()
-    global flag
-    flag = False
+    flags[0] = False
 
 
 def do_it(place_holder=0):
@@ -60,9 +59,9 @@ def do_it(place_holder=0):
     x = np.linspace(0, 2 * np.pi * duration,
                     int(duration * sample_rate))
     ramp_0 = np.logspace(1, 0, np.size(x), base=10) * ramp_amount
+    fade_size = int(np.size(x) * float(scale_fade.get()))
     attak = np.linspace(0, 1, int(np.size(x) * float(scale_attak.get())))
-    fade = np.linspace(1, 0, int(
-        np.size(x) * float(scale_fade.get())) + 1)
+    fade = np.linspace(1, 0, fade_size if fade_size >= 1 else 1)
 
     notes = []
     for i in num_range:
@@ -84,9 +83,9 @@ def do_it(place_holder=0):
 
         waveform[:np.size(attak)] *= attak
         waveform[-np.size(fade):] *= fade
-        waveform2 = np.roll(waveform, roll_amount, axis=None)
+        waveform2 = np.roll(waveform, roll_amount)
         waveform3 = np.vstack((waveform2, waveform)).T
-        if trem_flag.get() is True:
+        if flags[1] is True:
             trem_data = trem().reshape(-1, 1)
             if leftover != 0:
                 waveform3 = waveform3 * \
@@ -104,7 +103,7 @@ def stream_func(device=-1):
     def callback(outdata, frames, time, status):
         try:
             data = next(sound_slice)
-            if flag == False:
+            if flags[0] == False:
                 raise sd.CallbackStop
             else:
                 outdata[:, :] = data
@@ -115,7 +114,7 @@ def stream_func(device=-1):
     stream = sd.OutputStream(device=device, channels=2, callback=callback, blocksize=blocksize,
                              samplerate=sample_rate)
     with stream:
-        while flag == True:
+        while flags[0] == True:
             time.sleep(0.5)
         else:
             stream.__exit__()
@@ -130,8 +129,8 @@ def gen():
 
 
 def toggle_trem():
-    trem_flag.set(not trem_flag.get())
-    if trem_flag.get() is True:
+    flags[1] = not flags[1]
+    if flags[1] is True:
         trem_button.config(bg="#728C00", fg="white", text="Trem On")
     else:
         trem_button.config(bg="#000000", fg="white", text="tremolo")
@@ -245,8 +244,7 @@ def device_window_func():
         message_win("Default Device", "Device set to default")
 
     def stream_restart():
-        global flag
-        flag = True
+        flags[0] = True
         stream_thread = threading.Thread(
             target=stream_func, args=[device_num.get()])
         stream_thread.start()
@@ -256,8 +254,7 @@ def device_window_func():
         if messagebox.askokcancel('Question', 'Do you want to restart stream?'):
             stream_restart()
 
-    global flag
-    flag = False
+    flags[0] = False
     global device_window
     device_window = tk.Toplevel(master)
     device_window.title('Output Devices')
@@ -326,7 +323,7 @@ try:
     sample_rate = 48000
     blocksize = 256
     fade_amount = 6000
-    flag = True
+    flags = [True, False]   # [stream flag, tremolo flag]
     diagram_window = None
     device_window = None
     ms_win = None
@@ -340,8 +337,6 @@ try:
     master.geometry('700x500')
     master.configure(padx=20, pady=20)
     master.title("1/4 Dead Emergency")
-    trem_flag = tk.BooleanVar()
-    trem_flag.set(False)
     device_num = tk.IntVar()
     device_num.set(-1)
 
@@ -436,8 +431,8 @@ try:
     master.protocol("WM_DELETE_WINDOW", on_closing)
     master.mainloop()
 except KeyboardInterrupt:
-    flag = False
+    flags[0] = False
     print(' The End')
 except Exception as e:
-    flag = False
+    flags[0] = False
     print(f'{type(e).__name__}: {str(e)}')
