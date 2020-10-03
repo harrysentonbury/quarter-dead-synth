@@ -17,6 +17,8 @@ delay the left channel but, -there is a surprise!
 
 ![qde-layout](images/kb_e.jpg)
 
+Custom Keybindings for non qwerty keyboards can be made in the settings.
+
 ## python3.7 +
 
 ### Linux prerequisites for simpleaudio
@@ -42,18 +44,13 @@ sudo apt-get install python-tk
 
 ![qdgui-layout](images/qds_gui.jpg)
 
-**Note:- This is a quick and dirty orrible synth and not all computers are going
+**Note:-** This is a quick and dirty orrible synth and not all computers are going
 to deliver the goods in pristine condition. If this is the case,
-try the [Emergency-version](Emergency-version/) pictured below.** But if it
+try the [Emergency-version](Emergency-version/) pictured below. But if it
 does deliver, the overwhelming beauty of the sound will strike your heart and
 produce tears in your eyes.
 
 ![qdgui-layout](images/eqds_tr0.jpg)
-
-I have tried both versions on an antiquated dell laptop with a
-dual core pentium running Debian on which it worked perfectly with no perceptible latency. However,
-on my daughters ryzen3 gaming computer running Mint, quarter_dead_e.py was a disaster and
-Emergency-version had a bit of latency.(Though I did Knock her computer up in my shed).
 
 Listen to these synths on this video : [https://youtu.be/WFZZJfIEdT4](https://youtu.be/WFZZJfIEdT4).
 
