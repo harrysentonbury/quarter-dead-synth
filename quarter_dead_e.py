@@ -90,8 +90,107 @@ def toggle_flag():
         toggle_button.config(bg="#000000", fg="white", text="Mono")
 
 
-def binders(la):
-    master.bind(f"<{la}>", play_note)
+def binders():
+    for key in keys:
+        master.bind(f"<{key}>", play_note)
+
+
+def unbinders():
+    for key in keys:
+        master.unbind(f"<{key}>")
+
+
+def reset_default_kb():
+    unbinders()
+    keys[:] = ['a', 's', 'e', 'd', 'r', 'f', 't',
+               'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
+    binders()
+    do_it_int16()
+    if kb_window is not None:
+        kb_window.destroy()
+
+
+def kb_window_func():
+
+    def x_kb_window():
+        if messagebox.askokcancel("Quit ?", "Do you want to quit. Keybindings will be reset to default"):
+            reset_default_kb()
+
+    def gen():
+        end = 'End'
+        start = 0
+        while True:
+            yield (letter[start], start)
+            start += 1
+            if start == 15:
+                start = 0
+
+    def set_label(event):
+        def update_entry():
+            entry_label["text"] = " "
+            note_label['text'] = wot
+
+            if where == 14:
+                binders()
+
+                do_it_int16()
+                kb_window.destroy()
+
+            keys[where] = event.char
+
+        not_allowed_label["text"] = " "
+        if len(event.keysym) > 1:
+            not_allowed_label["text"] = "Key\nNot Allowed"
+            return
+        wot, where = next(letters)
+        entry_label["text"] = event.char
+        entry_label.after(500, update_entry)
+
+    unbinders()
+    first_note = 'E'
+    letter = ['F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C',
+              'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'End', ' ']
+    letters = gen()
+
+    global kb_window
+    kb_window = tk.Toplevel(master)
+    kb_window.geometry("400x200")
+    kb_window.title("Custom Keybindings")
+    kb_window.configure(padx=20)
+
+    label = tk.Label(kb_window, text="Note:")
+    note_label = tk.Label(kb_window, text=first_note,
+                          bg='#21e4e4', font='Times 30')
+    bind_to_key_label = tk.Label(kb_window, text="Binding to\n Key:")
+    entry_label = tk.Label(
+        kb_window, width=4, relief='sunken', font='Times 30')
+    not_allowed_label = tk.Label(kb_window, fg='#e41345')
+    reset_button = tk.Button(kb_window, text="reset", command=reset_default_kb)
+    close_kbw_button = tk.Button(
+        kb_window, text="Cancel", command=reset_default_kb)
+    kb_window.bind('<Key>', set_label)
+
+    label.grid(row=0, column=0, sticky='e')
+    note_label.grid(row=0, column=1, pady=10)
+    bind_to_key_label.grid(row=1, column=0, padx=10, sticky='w')
+    entry_label.grid(row=1, column=1, padx=20)
+    not_allowed_label.grid(row=1, column=2)
+    reset_button.grid(row=2, column=3, pady=20)
+    close_kbw_button.grid(row=2, column=4, padx=20)
+
+    kb_window.protocol("WM_DELETE_WINDOW", x_kb_window)
+    kb_window.lift()
+    kb_window.focus()
+
+
+def custom_keyboard():
+    if kb_window is None:
+        kb_window_func()
+        return
+    try:
+        kb_window.lift()
+    except tk.TclError:
+        kb_window_func()
 
 
 try:
@@ -101,17 +200,25 @@ try:
     sample_rate = 48000
     fade_amount = 8000
     fade = np.linspace(1, 0, fade_amount)
+    kb_window = None
 
     master = tk.Tk()
     master.geometry('700x500')
-    master.configure(padx=20, pady=20)
     master.title("1/4 Dead in E4")
+
+    menubar = tk.Menu(master)
+    dropdown_menu = tk.Menu(menubar)
+    dropdown_menu.add_command(
+        label="Set Up Custom Key Binding", command=custom_keyboard)
+    dropdown_menu.add_command(
+        label="Reset Default qwerty Keybindings", command=reset_default_kb)
+    menubar.add_cascade(label="settings", menu=dropdown_menu)
+    master.configure(padx=20, pady=20, menu=menubar)
 
     stop_flag = tk.BooleanVar()
     stop_flag.set(False)
 
-    for key in keys:
-        binders(f'{key}')
+    binders()
     master.bind("<ButtonRelease-1>", do_it_int16)
 
     duration_label = tk.Label(master, text='Duration')
