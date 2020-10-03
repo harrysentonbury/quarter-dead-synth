@@ -21,7 +21,7 @@ def play_it(event):
 
 def stop_it():
     master.destroy()
-    flags[0] = False
+    flags_stream_trem[0] = False
 
 
 def do_it(place_holder=0):
@@ -85,7 +85,7 @@ def do_it(place_holder=0):
         waveform[-np.size(fade):] *= fade
         waveform2 = np.roll(waveform, roll_amount)
         waveform3 = np.vstack((waveform2, waveform)).T
-        if flags[1] is True:
+        if flags_stream_trem[1] is True:
             trem_data = trem().reshape(-1, 1)
             if leftover != 0:
                 waveform3 = waveform3 * \
@@ -103,7 +103,7 @@ def stream_func(device=-1):
     def callback(outdata, frames, time, status):
         try:
             data = next(sound_slice)
-            if flags[0] == False:
+            if flags_stream_trem[0] == False:
                 raise sd.CallbackStop
             else:
                 outdata[:, :] = data
@@ -114,7 +114,7 @@ def stream_func(device=-1):
     stream = sd.OutputStream(device=device, channels=2, callback=callback, blocksize=blocksize,
                              samplerate=sample_rate)
     with stream:
-        while flags[0] == True:
+        while flags_stream_trem[0] == True:
             time.sleep(0.5)
         else:
             stream.__exit__()
@@ -129,8 +129,8 @@ def gen():
 
 
 def toggle_trem():
-    flags[1] = not flags[1]
-    if flags[1] is True:
+    flags_stream_trem[1] = not flags_stream_trem[1]
+    if flags_stream_trem[1] is True:
         trem_button.config(bg="#728C00", fg="white", text="Trem On")
     else:
         trem_button.config(bg="#000000", fg="white", text="tremolo")
@@ -164,6 +164,8 @@ def message_win_func(mtitle, blah):
     global ms_win
     ms_win = tk.Toplevel(master)
     ms_win.title(mtitle)
+    if is_icon[0] is True:
+        ms_win.iconphoto(False, icon_image)
     label = tk.Label(ms_win, text=blah, font='Times 20')
     button = tk.Button(ms_win, text='OK', width=6,
                        bg="#728C00", fg="white", command=closer)
@@ -193,6 +195,8 @@ def diagram_func():
         global diagram_window
         diagram_window = tk.Toplevel(master)
         diagram_window.title('Diagram')
+        if is_icon[0] is True:
+            diagram_window.iconphoto(False, icon_image)
         label_c = tk.Label(diagram_window, image=image_c)
         label_e = tk.Label(diagram_window, image=image_e)
         close_button = tk.Button(diagram_window, text='Close', command=closer)
@@ -244,21 +248,23 @@ def device_window_func():
         message_win("Default Device", "Device set to default")
 
     def stream_restart():
-        flags[0] = True
+        flags_stream_trem[0] = True
         stream_thread = threading.Thread(
             target=stream_func, args=[device_num.get()])
         stream_thread.start()
         device_window.destroy()
 
     def on_closing_dw():
-        if messagebox.askokcancel('Question', 'Do you want to restart stream?'):
+        if messagebox.askokcancel('Question', 'Do you want to close Output Devices window?'):
             stream_restart()
 
-    flags[0] = False
+    flags_stream_trem[0] = False
     global device_window
     device_window = tk.Toplevel(master)
     device_window.title('Output Devices')
     device_window.config(bg='#afb4b5')
+    if is_icon[0] is True:
+        device_window.iconphoto(False, icon_image)
 
     query = repr(sd.query_devices())
     query = query.split('\n')
@@ -323,7 +329,7 @@ try:
     sample_rate = 48000
     blocksize = 256
     fade_amount = 6000
-    flags = [True, False]   # [stream flag, tremolo flag]
+    flags_stream_trem = [True, False]   # [stream flag, tremolo flag]
     diagram_window = None
     device_window = None
     ms_win = None
@@ -339,25 +345,33 @@ try:
     master.title("1/4 Dead Emergency")
     device_num = tk.IntVar()
     device_num.set(-1)
+    is_icon = ['False']
 
     for key in keys:
         binders(f'{key}')
     master.bind("<ButtonRelease-1>", do_it)
 
+    try:        # Runnig in Atom throws an error! (Script package)
+        image_c = tk.PhotoImage(file='media/kb_c.gif')
+        image_e = tk.PhotoImage(file='media/kb_e.gif')
+        icon_image = tk.PhotoImage(file="media/knotperfect-icon.gif")
+        master.iconphoto(False, icon_image)
+        is_icon[0] = True
+    except tk.TclError:     # But this works?
+        if os.path.exists('images/kb_c.gif') and os.path.exists(
+                'images/kb_e.gif')and os.path.exists('images/knotperfect-icon.gif'):
+            icon_image = tk.PhotoImage(file="images/knotperfect-icon.gif")
+            image_c = tk.PhotoImage(file='images/kb_c.gif')
+            image_e = tk.PhotoImage(file='images/kb_e.gif')
+            master.iconphoto(False, icon_image)
+            is_icon[0] = True
+        else:
+            print('no keyboard layout diagrams but who cares')
+
     menu_bar = tk.Menu(master)
     menu_bar.add_command(label='Keyboard Diagram', command=diagram)
     menu_bar.add_command(label='Output', command=device_select)
     master.config(menu=menu_bar)
-
-    try:        # Runnig in Atom throws an error! (Script package)
-        image_c = tk.PhotoImage(file='media/kb_c.gif')
-        image_e = tk.PhotoImage(file='media/kb_e.gif')
-    except tk.TclError:     # But this works?
-        if os.path.exists('images/kb_c.gif') and os.path.exists('images/kb_e.gif'):
-            image_c = tk.PhotoImage(file='images/kb_c.gif')
-            image_e = tk.PhotoImage(file='images/kb_e.gif')
-        else:
-            print('no keyboard layout diagrams but who cares')
 
     duration_label = tk.Label(master, text='Duration')
     detune_label = tk.Label(master, text='Detune')
@@ -431,8 +445,8 @@ try:
     master.protocol("WM_DELETE_WINDOW", on_closing)
     master.mainloop()
 except KeyboardInterrupt:
-    flags[0] = False
+    flags_stream_trem[0] = False
     print(' The End')
 except Exception as e:
-    flags[0] = False
+    flags_stream_trem[0] = False
     print(f'{type(e).__name__}: {str(e)}')
