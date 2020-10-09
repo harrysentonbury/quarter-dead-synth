@@ -154,6 +154,7 @@ def kb_window_func():
 
     global kb_window
     kb_window = tk.Toplevel(master)
+    kb_window.grab_set()
     kb_window.geometry("400x200")
     kb_window.title("Custom Keybindings")
     kb_window.configure(padx=20)
@@ -179,6 +180,8 @@ def kb_window_func():
     close_kbw_button.grid(row=2, column=4, padx=20)
 
     kb_window.protocol("WM_DELETE_WINDOW", x_kb_window)
+    kb_window.attributes('-topmost', 'true')
+
     kb_window.lift()
     kb_window.focus()
 
