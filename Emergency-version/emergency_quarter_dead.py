@@ -138,6 +138,7 @@ def toggle_trem():
 
 
 def change_key():
+    unbinders()
     key_change_bool[0] = not key_change_bool[0]
     if key_change_bool[0] is True:
         keys[:] = c_keys[:]
@@ -145,15 +146,18 @@ def change_key():
     else:
         keys[:] = e_keys[:]
         key_change_button.config(bg="#000000", fg="white", text='key of E4')
-    for key in unbinders:
-        master.unbind(f'<{key}>')
-    for key in keys:
-        binders(f'{key}')
+    binders()
     do_it()
 
 
-def binders(la):
-    master.bind(f"<{la}>", play_it)
+def unbinders():
+    for key in keys:
+        master.unbind(f'<{key}>')
+
+
+def binders():
+    for key in keys:
+        master.bind(f"<{key}>", play_it)
 
 
 def message_win_func(mtitle, blah):
@@ -311,14 +315,141 @@ def device_select():
         device_window_func()
 
 
+def reset_default_kb(is_c):
+    unbinders()
+    if is_c is False:
+        e_keys[:] = ['a', 's', 'e', 'd', 'r', 'f', 't',
+                     'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
+        keys[:] = e_keys[:]
+    else:
+        c_keys[:] = ['a', 'w', 's', 'e', 'd', 'f', 't',
+                     'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p']
+        keys[:] = c_keys[:]
+    binders()
+    do_it()
+    if kb_window is not None:
+        kb_window.destroy()
+        print(f'{e_keys} reset\n{c_keys}')
+
+
+def kb_window_func(is_c):
+
+    def x_kb_window():
+        if messagebox.askokcancel("Quit ?", "Do you want to quit. Keybindings will be reset to default"):
+            reset_default_kb(is_c)
+
+    def gen(number_of_notes=15):
+        end = 'End'
+        start = 0
+        while True:
+            if number_of_notes == 15:
+                yield (letter[start], start)
+            else:
+                yield (c_letter[start], start)
+            start += 1
+            if start == number_of_notes:
+                start = 0
+
+    def set_label(event):
+        def update_entry():
+            entry_label["text"] = " "
+            if is_c is False:
+                wot, where = next(e_letters)
+                note_label['text'] = wot
+
+                if where == 14:
+                    keys[:] = e_keys[:]
+                    binders()
+                    do_it()
+                    kb_window.destroy()
+                e_keys[where] = event.char
+                print(f'{e_keys} and {where} e_key')
+            else:
+                wot, where = next(c_letters)
+                note_label['text'] = wot
+
+                if where == 15:
+                    keys[:] = c_keys[:]
+                    binders()
+                    do_it()
+                    kb_window.destroy()
+                c_keys[where] = event.char
+                print(f'{c_keys} and {where}')
+
+        not_allowed_label["text"] = " "
+        if len(event.keysym) > 1:
+            not_allowed_label["text"] = "Key\nNot Allowed"
+            return
+        entry_label["text"] = event.char
+        entry_label.after(500, update_entry)
+
+    unbinders()
+    #e_key = [is_c]
+    if is_c is False:
+        first_note = 'E'
+    else:
+        first_note = 'C'
+    letter = ['F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C',
+              'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'End', ' ']
+    c_letter = ['Db', 'D', 'Eb', 'E', 'F', 'Gb',
+                'G', 'Ab', 'A', 'Bb', 'B', 'Cb', 'C', 'Db', 'D', 'End', ' ']
+    e_letters = gen(number_of_notes=15)
+    c_letters = gen(number_of_notes=16)
+
+    global kb_window
+    kb_window = tk.Toplevel(master)
+    kb_window.grab_set()
+    kb_window.geometry("400x200")
+    if is_c is False:
+        kb_window.title("Custom Keybindings for E4")
+    else:
+        kb_window.title("Custom Keybindings for C4")
+    kb_window.configure(padx=20)
+    if is_icon[0] is True:
+        kb_window.iconphoto(False, icon_image)
+
+    label = tk.Label(kb_window, text="Note:")
+    note_label = tk.Label(kb_window, text=first_note, fg='red',
+                          bg='green', font='Times 30')
+    bind_to_key_label = tk.Label(kb_window, text="Binding")
+    entry_label = tk.Label(
+        kb_window, width=4, relief='sunken', font='Times 30')
+    not_allowed_label = tk.Label(kb_window, fg='#e41345')
+    reset_button = tk.Button(kb_window, text="reset",
+                             command=lambda: reset_default_kb(is_c))
+    close_kbw_button = tk.Button(
+        kb_window, text="Cancel", command=lambda: reset_default_kb(is_c))
+    kb_window.bind('<Key>', set_label)
+
+    label.grid(row=0, column=0, sticky='e')
+    note_label.grid(row=0, column=1, pady=10)
+    bind_to_key_label.grid(row=1, column=0, padx=10, sticky='w')
+    entry_label.grid(row=1, column=1, padx=20)
+    not_allowed_label.grid(row=1, column=2)
+    reset_button.grid(row=2, column=3, pady=20)
+    close_kbw_button.grid(row=2, column=4, padx=20)
+
+    kb_window.protocol("WM_DELETE_WINDOW", x_kb_window)
+    kb_window.lift()
+    kb_window.focus()
+
+
+def custom_keyboard(is_c):
+    if kb_window is None:
+        kb_window_func(is_c)
+        return
+    try:
+        kb_window.lift()
+    except tk.TclError:
+        kb_window_func(is_c)
+
+
 try:
     e_keys = ['a', 's', 'e', 'd', 'r', 'f', 't',
               'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
 
     c_keys = ['a', 'w', 's', 'e', 'd', 'f', 't',
               'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p']
-
-    unbinders = ['w', 'r', 'y', 'i', 'o']
 
     keys = []
     keys[:] = e_keys[:]
@@ -333,6 +464,7 @@ try:
     diagram_window = None
     device_window = None
     ms_win = None
+    kb_window = None
     sound = np.zeros((blocksize, 2))
     sound_slice = gen()
     fade = np.linspace(1, 0, fade_amount)
@@ -347,8 +479,7 @@ try:
     device_num.set(-1)
     is_icon = ['False']
 
-    for key in keys:
-        binders(f'{key}')
+    binders()
     master.bind("<ButtonRelease-1>", do_it)
 
     try:        # Runnig in Atom throws an error! (Script package)
@@ -369,8 +500,15 @@ try:
             print('no keyboard layout diagrams but who cares')
 
     menu_bar = tk.Menu(master)
-    menu_bar.add_command(label='Keyboard Diagram', command=diagram)
-    menu_bar.add_command(label='Output', command=device_select)
+    dropdown_settings = tk.Menu(menu_bar)
+    dropdown_settings.add_command(label='Keyboard Diagram', command=diagram)
+    dropdown_settings.add_command(
+        label='Output Devices', command=device_select)
+    dropdown_settings.add_command(
+        label="Set Up Custom Key Binding", command=lambda: custom_keyboard(key_change_bool[0]))
+    dropdown_settings.add_command(
+        label="Reset Default qwerty Keybindings", command=lambda: reset_default_kb(key_change_bool[0]))
+    menu_bar.add_cascade(label="settings", menu=dropdown_settings)
     master.config(menu=menu_bar)
 
     duration_label = tk.Label(master, text='Duration')
