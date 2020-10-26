@@ -160,7 +160,7 @@ def kb_window_func():
     kb_window.configure(padx=20)
 
     label = tk.Label(kb_window, text="Note:")
-    note_label = tk.Label(kb_window, text=first_note,
+    note_label = tk.Label(kb_window, text=first_note, width=4,
                           bg='#21e4e4', font='Times 30')
     bind_to_key_label = tk.Label(kb_window, text="Binding to\n Key:")
     entry_label = tk.Label(
