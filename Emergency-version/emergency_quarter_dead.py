@@ -7,6 +7,7 @@ import time
 import os
 import tkinter as tk
 from tkinter import messagebox
+import Pmw
 
 
 def on_closing():
@@ -329,7 +330,6 @@ def reset_default_kb(is_c):
     do_it()
     if kb_window is not None:
         kb_window.destroy()
-        print(f'{e_keys} reset\n{c_keys}')
 
 
 def kb_window_func(is_c):
@@ -363,7 +363,6 @@ def kb_window_func(is_c):
                     do_it()
                     kb_window.destroy()
                 e_keys[where] = event.char
-                print(f'{e_keys} and {where} e_key')
             else:
                 wot, where = next(c_letters)
                 note_label['text'] = wot
@@ -374,7 +373,6 @@ def kb_window_func(is_c):
                     do_it()
                     kb_window.destroy()
                 c_keys[where] = event.char
-                print(f'{c_keys} and {where}')
 
         not_allowed_label["text"] = " "
         if len(event.keysym) > 1:
@@ -384,7 +382,7 @@ def kb_window_func(is_c):
         entry_label.after(500, update_entry)
 
     unbinders()
-    #e_key = [is_c]
+
     if is_c is False:
         first_note = 'E'
     else:
@@ -399,7 +397,7 @@ def kb_window_func(is_c):
     global kb_window
     kb_window = tk.Toplevel(master)
     kb_window.grab_set()
-    kb_window.geometry("400x200")
+    kb_window.geometry("500x200")
     if is_c is False:
         kb_window.title("Custom Keybindings for E4")
     else:
@@ -409,17 +407,20 @@ def kb_window_func(is_c):
         kb_window.iconphoto(False, icon_image)
 
     label = tk.Label(kb_window, text="Note:")
-    note_label = tk.Label(kb_window, text=first_note, fg='red',
-                          bg='green', font='Times 30')
-    bind_to_key_label = tk.Label(kb_window, text="Binding")
+    note_label = tk.Label(kb_window, text=first_note, width=4,
+                          bg='#0ba4a4', font='Times 30')
+    bind_to_key_label = tk.Label(kb_window, text="Binding\nTo Key")
     entry_label = tk.Label(
         kb_window, width=4, relief='sunken', font='Times 30')
     not_allowed_label = tk.Label(kb_window, fg='#e41345')
-    reset_button = tk.Button(kb_window, text="reset",
+    reset_button = tk.Button(kb_window, text="Reset Default",
                              command=lambda: reset_default_kb(is_c))
     close_kbw_button = tk.Button(
         kb_window, text="Cancel", command=lambda: reset_default_kb(is_c))
     kb_window.bind('<Key>', set_label)
+    tool_tip = Pmw.Balloon(kb_window)
+    tool_tip.bind(
+        entry_label, "Type the keys that you want binding\nto the above notes displayed in blue")
 
     label.grid(row=0, column=0, sticky='e')
     note_label.grid(row=0, column=1, pady=10)
@@ -472,6 +473,7 @@ try:
     stream_thread.start()
 
     master = tk.Tk()
+    Pmw.initialise(master)
     master.geometry('700x500')
     master.configure(padx=20, pady=20)
     master.title("1/4 Dead Emergency")
@@ -482,22 +484,16 @@ try:
     binders()
     master.bind("<ButtonRelease-1>", do_it)
 
-    try:        # Runnig in Atom throws an error! (Script package)
-        image_c = tk.PhotoImage(file='media/kb_c.gif')
-        image_e = tk.PhotoImage(file='media/kb_e.gif')
-        icon_image = tk.PhotoImage(file="media/knotperfect-icon.gif")
+    # Runnig in Atom will not find media dir! (Script package)
+    if os.path.exists('./media/kb_c.gif') and os.path.exists(
+            './media/kb_e.gif')and os.path.exists('./media/knotperfect-icon.gif'):
+        image_c = tk.PhotoImage(file='./media/kb_c.gif')
+        image_e = tk.PhotoImage(file='./media/kb_e.gif')
+        icon_image = tk.PhotoImage(file="./media/knotperfect-icon.gif")
         master.iconphoto(False, icon_image)
         is_icon[0] = True
-    except tk.TclError:     # But this works?
-        if os.path.exists('images/kb_c.gif') and os.path.exists(
-                'images/kb_e.gif')and os.path.exists('images/knotperfect-icon.gif'):
-            icon_image = tk.PhotoImage(file="images/knotperfect-icon.gif")
-            image_c = tk.PhotoImage(file='images/kb_c.gif')
-            image_e = tk.PhotoImage(file='images/kb_e.gif')
-            master.iconphoto(False, icon_image)
-            is_icon[0] = True
-        else:
-            print('no keyboard layout diagrams but who cares')
+    else:
+        print('no keyboard layout diagrams but who cares')
 
     menu_bar = tk.Menu(master)
     dropdown_settings = tk.Menu(menu_bar)
