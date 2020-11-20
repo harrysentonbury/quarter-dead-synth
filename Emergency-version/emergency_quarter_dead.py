@@ -12,6 +12,7 @@ import Pmw
 
 def on_closing():
     if messagebox.askokcancel("Quit?", "Do You Want To Quit"):
+        #print(blocksize)
         stop_it()
 
 
@@ -231,6 +232,11 @@ def device_window_func():
     def driver_setter():
         if ms_win is not None:
             ms_win.destroy()
+        if list_bx.curselection() == ():
+            message_win(
+                'Oi!', '''Select a device \n from the list or cancel
+                ''')
+            return
         num = list_bx.curselection()[0]
         num_name = sd.query_devices()[num].get('name')
         try:
@@ -247,6 +253,7 @@ def device_window_func():
 
     def reset_default():
         device_num.set(-1)
+        blocksize = default_blocksize
         stream_restart()
         if ms_win is not None:
             ms_win.destroy()
@@ -258,6 +265,11 @@ def device_window_func():
             target=stream_func, args=[device_num.get()])
         stream_thread.start()
         device_window.destroy()
+
+    def show_blocksize(event):
+        new_blocksize = 2**int(event)
+        blocksize_label['text'] = str(new_blocksize)
+        blocksize = new_blocksize
 
     def on_closing_dw():
         if messagebox.askokcancel('Question', 'Do you want to close Output Devices window?'):
@@ -284,6 +296,8 @@ def device_window_func():
                                   bg="#728C00", fg="white", command=driver_setter)
     reset_button = tk.Button(
         device_window, text='Reset to Default Device', command=reset_default)
+    scale_blocksize = tk.Scale(device_window, label="Blocksize", from_=8, to=11, orient=tk.HORIZONTAL, showvalue=False, command=show_blocksize)
+    blocksize_label = tk.Label(device_window, text=str(blocksize))
     cancel_button = tk.Button(
         device_window, text='Cancel', command=stream_restart)
     list_bx = tk.Listbox(
@@ -297,8 +311,10 @@ def device_window_func():
     label_1.grid(row=2, column=0, sticky='ne', pady=8, padx=5)
     frame_0.grid(row=2, column=0, rowspan=2, columnspan=2,
                  sticky='w', pady=5, padx=20)
+    #scale_blocksize.grid(row=2, column=2)
+    #blocksize_label.grid(row=3, column=2, sticky='n')
     set_device_button.grid(row=3, column=1, pady=5, padx=5)
-    cancel_button.grid(row=3, column=2, sticky='w')
+    cancel_button.grid(row=4, column=2, sticky='w')
     reset_button.grid(row=4, column=1, sticky='w', pady=8)
     scrollbar.config(command=list_bx.yview)
 
@@ -459,6 +475,7 @@ try:
     key_change_bool = [False]
 
     sample_rate = 48000
+    default_blocksize = 256
     blocksize = 256
     fade_amount = 6000
     flags_stream_trem = [True, False]   # [stream flag, tremolo flag]
