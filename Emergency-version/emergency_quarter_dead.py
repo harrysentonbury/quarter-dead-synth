@@ -231,6 +231,11 @@ def device_window_func():
     def driver_setter():
         if ms_win is not None:
             ms_win.destroy()
+        if list_bx.curselection() == ():
+            message_win(
+                'Oi!', '''Select a device \n from the list or cancel
+                ''')
+            return
         num = list_bx.curselection()[0]
         num_name = sd.query_devices()[num].get('name')
         try:
