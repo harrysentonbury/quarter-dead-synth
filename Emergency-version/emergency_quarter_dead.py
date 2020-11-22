@@ -12,7 +12,6 @@ import Pmw
 
 def on_closing():
     if messagebox.askokcancel("Quit?", "Do You Want To Quit"):
-        #print(blocksize)
         stop_it()
 
 
@@ -78,10 +77,6 @@ def do_it(place_holder=0):
         waveform = ((waveform + waveform_detune) *
                     (waveform_mod / 2 + 0.5)) * 0.1
 
-        leftover = np.size(waveform) // blocksize != 0
-        if leftover != 0:
-            extra = np.zeros(blocksize - leftover)
-            waveform = np.concatenate((waveform, extra))
 
         waveform[:np.size(attak)] *= attak
         waveform[-np.size(fade):] *= fade
@@ -89,11 +84,7 @@ def do_it(place_holder=0):
         waveform3 = np.vstack((waveform2, waveform)).T
         if flags_stream_trem[1] is True:
             trem_data = trem().reshape(-1, 1)
-            if leftover != 0:
-                waveform3 = waveform3 * \
-                    np.concatenate((trem_data, extra.reshape(-1, 1)))
-            else:
-                waveform3 = waveform3 * trem_data
+            waveform3 = waveform3 * trem_data
         notes.append(waveform3)
 
     global key_notes
@@ -101,7 +92,7 @@ def do_it(place_holder=0):
     return key_notes
 
 
-def stream_func(device=-1):
+def stream_func(device=-1, chunk=256):
     def callback(outdata, frames, time, status):
         try:
             data = next(sound_slice)
@@ -112,6 +103,19 @@ def stream_func(device=-1):
         except ValueError:
             outdata[:, :] = np.zeros((blocksize, 2))
 
+
+    def gen():
+
+        global sound
+        sound = np.zeros((blocksize, 2))
+        while True:
+            slice = sound[:blocksize, :]
+            yield slice
+            sound = sound[blocksize:, :]
+
+
+    blocksize = chunk
+    sound_slice = gen()
     device = device if device >= 0 else None
     stream = sd.OutputStream(device=device, channels=2, callback=callback, blocksize=blocksize,
                              samplerate=sample_rate)
@@ -122,12 +126,6 @@ def stream_func(device=-1):
             stream.__exit__()
 
 
-def gen():
-    global sound
-    while True:
-        slice = sound[:blocksize, :]
-        yield slice
-        sound = sound[blocksize:, :]
 
 
 def toggle_trem():
@@ -243,42 +241,44 @@ def device_window_func():
             check_driver = sd.check_output_settings(
                 device=num, channels=2, dtype='float32', samplerate=sample_rate)
             device_num.set(num)
-            stream_restart()
+            stream_restart(new_blocksize[0])
             message_win(
-                'Driver Set', '''Device number {} ({}) \n set as output device
-                '''.format(num, num_name))
+                'Driver Set', '''Device number {} ({}) \n set as output device.\n Blocksize = {}
+                '''.format(num, num_name, new_blocksize))
         except sd.PortAudioError:
             message_win('sd.PortAudioError',
                         'Device number {} ({}) \n is not supported. Try another'.format(num, num_name))
 
     def reset_default():
         device_num.set(-1)
-        blocksize = default_blocksize
+        new_blocksize[0] = default_blocksize
         stream_restart()
         if ms_win is not None:
             ms_win.destroy()
-        message_win("Default Device", "Device set to default")
+        message_win("Default Device", f"Device set to default.\nBlocksize = {default_blocksize}")
 
-    def stream_restart():
+    def stream_restart(chunk_size=256):
         flags_stream_trem[0] = True
         stream_thread = threading.Thread(
-            target=stream_func, args=[device_num.get()])
+            target=stream_func, args=[device_num.get(), chunk_size])
         stream_thread.start()
         device_window.destroy()
 
     def show_blocksize(event):
-        new_blocksize = 2**int(event)
-        blocksize_label['text'] = str(new_blocksize)
-        blocksize = new_blocksize
+        new_blocksize_val = 2**int(event)
+        blocksize_label['text'] = f"Blocksize = {str(new_blocksize_val)}"
+        new_blocksize[0] = new_blocksize_val
 
     def on_closing_dw():
         if messagebox.askokcancel('Question', 'Do you want to close Output Devices window?'):
+            new_blocksize[0] = default_blocksize
             stream_restart()
+
 
     flags_stream_trem[0] = False
     global device_window
     device_window = tk.Toplevel(master)
-    device_window.title('Output Devices')
+    device_window.title('Output Devices And Blocksize')
     device_window.config(bg='#afb4b5')
     if is_icon[0] is True:
         device_window.iconphoto(False, icon_image)
@@ -295,15 +295,17 @@ def device_window_func():
     set_device_button = tk.Button(frame_0, text='Set', height=3, width=6, activebackground='#99c728',
                                   bg="#728C00", fg="white", command=driver_setter)
     reset_button = tk.Button(
-        device_window, text='Reset to Default Device', command=reset_default)
-    scale_blocksize = tk.Scale(device_window, label="Blocksize", from_=8, to=11, orient=tk.HORIZONTAL, showvalue=False, command=show_blocksize)
-    blocksize_label = tk.Label(device_window, text=str(blocksize))
+        device_window, text='Reset to Defaults', command=reset_default)
+    scale_blocksize = tk.Scale(device_window, label="Set Blocksize", from_=8, to=11, orient=tk.HORIZONTAL, showvalue=False, command=show_blocksize)
+    scale_blocksize.set(int(np.log2(new_blocksize)))
+    blocksize_label = tk.Label(device_window, text=f'Blocksize = {str(new_blocksize[0])}', width=14)
     cancel_button = tk.Button(
-        device_window, text='Cancel', command=stream_restart)
+        device_window, text='Close', command=lambda: stream_restart(new_blocksize[0]))
     list_bx = tk.Listbox(
         device_window, yscrollcommand=scrollbar.set, width=60, height=25)
     for i in range(len(query)):
         list_bx.insert(tk.END, query[i])
+    list_bx.selection_set(tk.END)
 
     label_0.grid(row=0, column=0, columnspan=2)
     list_bx.grid(row=1, column=0, columnspan=3)
@@ -311,8 +313,8 @@ def device_window_func():
     label_1.grid(row=2, column=0, sticky='ne', pady=8, padx=5)
     frame_0.grid(row=2, column=0, rowspan=2, columnspan=2,
                  sticky='w', pady=5, padx=20)
-    #scale_blocksize.grid(row=2, column=2)
-    #blocksize_label.grid(row=3, column=2, sticky='n')
+    scale_blocksize.grid(row=2, column=2)
+    blocksize_label.grid(row=3, column=2, sticky='n')
     set_device_button.grid(row=3, column=1, pady=5, padx=5)
     cancel_button.grid(row=4, column=2, sticky='w')
     reset_button.grid(row=4, column=1, sticky='w', pady=8)
@@ -476,17 +478,17 @@ try:
 
     sample_rate = 48000
     default_blocksize = 256
-    blocksize = 256
+    new_blocksize = [default_blocksize]
     fade_amount = 6000
     flags_stream_trem = [True, False]   # [stream flag, tremolo flag]
     diagram_window = None
     device_window = None
     ms_win = None
     kb_window = None
-    sound = np.zeros((blocksize, 2))
-    sound_slice = gen()
+    # sound = np.zeros((blocksize, 2))
+    # sound_slice = gen()
     fade = np.linspace(1, 0, fade_amount)
-    stream_thread = threading.Thread(target=stream_func)
+    stream_thread = threading.Thread(target=stream_func, args=[-1, default_blocksize])
     stream_thread.start()
 
     master = tk.Tk()
@@ -516,7 +518,7 @@ try:
     dropdown_settings = tk.Menu(menu_bar)
     dropdown_settings.add_command(label='Keyboard Diagram', command=diagram)
     dropdown_settings.add_command(
-        label='Output Devices', command=device_select)
+        label='Select Output Device And Blocksize', command=device_select)
     dropdown_settings.add_command(
         label="Set Up Custom Key Binding", command=lambda: custom_keyboard(key_change_bool[0]))
     dropdown_settings.add_command(
