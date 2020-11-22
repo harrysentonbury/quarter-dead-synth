@@ -11,9 +11,8 @@
   - Its got attack and fade.
   - Switch between C4 and E4.
 
-This one uses sounddevice instead of simpleaudio.
-It uses a callback function that streams zeros if no key
-has been pressed. The images below shows the keyboard layout
+This one uses sounddevice OutputStream instead of simpleaudio.
+The images below shows the keyboard layout
 for C4 and E4 respectively.
 
 The output device can be changed by clicking 'Output' on the menu bar. This will
