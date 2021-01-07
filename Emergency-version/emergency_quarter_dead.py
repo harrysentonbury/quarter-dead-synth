@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 
-import numpy as np
-import sounddevice as sd
+# Copyright (C) 2020 Harry Sentonbury
+# GNU General Public License v3.0
+
+import os
 import threading
 import time
-import os
+
+import mido
+import numpy as np
+import sounddevice as sd
 import tkinter as tk
 from tkinter import messagebox
 import Pmw
@@ -41,6 +46,9 @@ def do_it(place_holder=0):
         trem_adder = 1.0 - trem_amount
         return np.sin(x * 6.0) * trem_amount + trem_adder
 
+    applying_sliders_flag[0] = True
+    update_sliders_button.config(text="Wait", state="disabled")
+    update_sliders_button.update()
     fm = 0.25
     freq3 = 440.0
     freq_detune = float(scale_detune.get())
@@ -52,10 +60,14 @@ def do_it(place_holder=0):
     tm = st * 1.2
     sm = 1 - st
     trem_amount = float(scale_trem.get())
-    if key_change_bool[0] is True:
-        num_range = c_range
+    if midi_on_flag[0] is True:
+        num_range = midi_range
+        keys[:] = note_nums[:]
     else:
-        num_range = e_range
+        if key_change_bool[0] is True:
+            num_range = c_range
+        else:
+            num_range = e_range
 
     x = np.linspace(0, 2 * np.pi * duration,
                     int(duration * sample_rate))
@@ -77,7 +89,6 @@ def do_it(place_holder=0):
         waveform = ((waveform + waveform_detune) *
                     (waveform_mod / 2 + 0.5)) * 0.1
 
-
         waveform[:np.size(attak)] *= attak
         waveform[-np.size(fade):] *= fade
         waveform2 = np.roll(waveform, roll_amount)
@@ -89,6 +100,9 @@ def do_it(place_holder=0):
 
     global key_notes
     key_notes = dict(zip(keys, notes))
+    applying_sliders_flag[0] = False
+    update_sliders_button.update()
+    update_sliders_button.config(text="Apply Slider Changes", state="normal")
     return key_notes
 
 
@@ -103,16 +117,13 @@ def stream_func(device=-1, chunk=256):
         except ValueError:
             outdata[:, :] = np.zeros((blocksize, 2))
 
-
     def gen():
-
         global sound
         sound = np.zeros((blocksize, 2))
         while True:
             slice = sound[:blocksize, :]
             yield slice
             sound = sound[blocksize:, :]
-
 
     blocksize = chunk
     sound_slice = gen()
@@ -126,28 +137,34 @@ def stream_func(device=-1, chunk=256):
             stream.__exit__()
 
 
-
-
 def toggle_trem():
     flags_stream_trem[1] = not flags_stream_trem[1]
     if flags_stream_trem[1] is True:
         trem_button.config(bg="#728C00", fg="white", text="Trem On")
     else:
         trem_button.config(bg="#000000", fg="white", text="tremolo")
-    do_it()
+    if midi_on_flag[0] is True:
+        return
+    else:
+        do_it()
 
 
 def change_key():
-    unbinders()
-    key_change_bool[0] = not key_change_bool[0]
-    if key_change_bool[0] is True:
-        keys[:] = c_keys[:]
-        key_change_button.config(bg="#728C00", fg="white", text='Key of C4')
+    if midi_on_flag[0] is True:
+        return
     else:
-        keys[:] = e_keys[:]
-        key_change_button.config(bg="#000000", fg="white", text='key of E4')
-    binders()
-    do_it()
+        unbinders()
+        key_change_bool[0] = not key_change_bool[0]
+        if key_change_bool[0] is True:
+            keys[:] = c_keys[:]
+            key_change_button.config(
+                bg="#728C00", fg="white", text='Key of C4')
+        else:
+            keys[:] = e_keys[:]
+            key_change_button.config(
+                bg="#000000", fg="white", text='key of E4')
+        binders()
+        do_it()
 
 
 def unbinders():
@@ -161,10 +178,6 @@ def binders():
 
 
 def message_win_func(mtitle, blah):
-
-    def closer():
-        ms_win.destroy()
-
     global ms_win
     ms_win = tk.Toplevel(master)
     ms_win.title(mtitle)
@@ -172,7 +185,7 @@ def message_win_func(mtitle, blah):
         ms_win.iconphoto(False, icon_image)
     label = tk.Label(ms_win, text=blah, font='Times 20')
     button = tk.Button(ms_win, text='OK', width=6,
-                       bg="#728C00", fg="white", command=closer)
+                       bg="#728C00", fg="white", command=lambda: ms_win.destroy())
     ms_win.bind('<Return>', lambda event=None: button.invoke())
 
     label.pack(padx=30, pady=10)
@@ -274,7 +287,6 @@ def device_window_func():
             new_blocksize[0] = default_blocksize
             stream_restart()
 
-
     flags_stream_trem[0] = False
     global device_window
     device_window = tk.Toplevel(master)
@@ -296,7 +308,8 @@ def device_window_func():
                                   bg="#728C00", fg="white", command=driver_setter)
     reset_button = tk.Button(
         device_window, text='Reset to Defaults', command=reset_default)
-    scale_blocksize = tk.Scale(device_window, label="Set Blocksize", from_=8, to=11, orient=tk.HORIZONTAL, showvalue=False, command=show_blocksize)
+    scale_blocksize = tk.Scale(device_window, label="Set Blocksize", from_=8,
+                               to=11, orient=tk.HORIZONTAL, showvalue=False, command=show_blocksize)
     scale_blocksize.set(int(np.log2(new_blocksize)))
     blocksize_label = tk.Label(device_window, text=f'Blocksize = {str(new_blocksize[0])}', width=14)
     cancel_button = tk.Button(
@@ -335,19 +348,22 @@ def device_select():
 
 
 def reset_default_kb(is_c):
-    unbinders()
-    if is_c is False:
-        e_keys[:] = ['a', 's', 'e', 'd', 'r', 'f', 't',
-                     'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
-        keys[:] = e_keys[:]
+    if midi_on_flag[0] is True:
+        return
     else:
-        c_keys[:] = ['a', 'w', 's', 'e', 'd', 'f', 't',
-                     'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p']
-        keys[:] = c_keys[:]
-    binders()
-    do_it()
-    if kb_window is not None:
-        kb_window.destroy()
+        unbinders()
+        if is_c is False:
+            e_keys[:] = ['a', 's', 'e', 'd', 'r', 'f', 't',
+                         'g', 'h', 'u', 'j', 'i', 'k', 'l', 'p']
+            keys[:] = e_keys[:]
+        else:
+            c_keys[:] = ['a', 'w', 's', 'e', 'd', 'f', 't',
+                         'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p']
+            keys[:] = c_keys[:]
+        binders()
+        do_it()
+        if kb_window is not None:
+            kb_window.destroy()
 
 
 def kb_window_func(is_c):
@@ -454,13 +470,96 @@ def kb_window_func(is_c):
 
 
 def custom_keyboard(is_c):
-    if kb_window is None:
-        kb_window_func(is_c)
+    if midi_on_flag[0] is True:
         return
+    else:
+        if kb_window is None:
+            kb_window_func(is_c)
+            return
+        try:
+            kb_window.lift()
+        except tk.TclError:
+            kb_window_func(is_c)
+
+
+def choose_port_func():
+    def select_input():
+        master.unbind("<ButtonRelease-1>")
+        unbinders()
+        midi_on_flag[0] = True
+        if list_box.curselection() == ():
+            print("Nope")
+            return
+        # port_name[0] = list_box.get(list_box.curselection())
+        # print(port_name[0])
+        do_it()
+        activate_midi(list_box.get(list_box.curselection()))
+        port_window.destroy()
+
+    midi_input_names = mido.get_input_names()
+    global port_window
+    port_window = tk.Toplevel(master)
+
+    label_0 = tk.Label(port_window, text="Input Names")
+    scrollbar = tk.Scrollbar(port_window)
+    list_box = tk.Listbox(
+        port_window, yscrollcommand=scrollbar.set, width=60, height=15)
+    for i in midi_input_names:
+        list_box.insert(tk.END, i)
+    list_box.selection_set(tk.END)
+    select_button = tk.Button(port_window, text="Select", bg="#728C00",
+                              fg="white", command=select_input)
+    close_midi_win_button = tk.Button(port_window, text="Close",
+                                      command=lambda: port_window.destroy())
+
+    label_0.grid(row=0, column=0)
+    list_box.grid(row=1, column=0, columnspan=2)
+    scrollbar.grid(row=1, column=2, sticky=tk.N + tk.S)
+    scrollbar.config(command=list_box.yview)
+    select_button.grid(row=2, column=0, pady=10)
+    close_midi_win_button.grid(row=2, column=1)
+    port_window.lift()
+
+
+def choose_port():
+    if port_window is None:
+        choose_port_func()
     try:
-        kb_window.lift()
+        port_window.lift()
     except tk.TclError:
-        kb_window_func(is_c)
+        choose_port_func()
+
+
+def midi_stuff(port_arg):
+    def play_note(event):
+        global key_notes
+        if applying_sliders_flag[0] is True:
+            return
+        else:
+            try:
+                global sound
+                sound = key_notes.get(event)
+                # print(key_notes.get(event).type)
+            except TypeError:
+                return
+
+    if len(port_arg) > 1:
+        portname = port_arg
+    else:
+        portname = None  # Use default port
+
+    with mido.open_input(portname) as port:
+        print('Using {}'.format(port))
+        print('Waiting for messages...')
+        for message in port:
+            if message.type == 'note_on' and message.velocity > 0:
+                play_note(message.note)
+
+
+def activate_midi(port_arg):
+    midi_thread = threading.Thread(
+        target=midi_stuff, args=[port_arg], daemon=True)
+    midi_thread.start()
 
 
 try:
@@ -470,10 +569,15 @@ try:
     c_keys = ['a', 'w', 's', 'e', 'd', 'f', 't',
               'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p']
 
+    note_nums = [i for i in range(36, 97)]
+    midi_on_flag = [False]
+    port_name = [None]
+    applying_sliders_flag = [True]
     keys = []
     keys[:] = e_keys[:]
     c_range = range(-9, 7)
     e_range = range(-5, 10)
+    midi_range = range(-33, 28)
     key_change_bool = [False]
 
     sample_rate = 48000
@@ -485,10 +589,10 @@ try:
     device_window = None
     ms_win = None
     kb_window = None
-    # sound = np.zeros((blocksize, 2))
-    # sound_slice = gen()
+    port_window = None
     fade = np.linspace(1, 0, fade_amount)
-    stream_thread = threading.Thread(target=stream_func, args=[-1, default_blocksize])
+    stream_thread = threading.Thread(
+        target=stream_func, args=[-1, default_blocksize])
     stream_thread.start()
 
     master = tk.Tk()
@@ -523,6 +627,7 @@ try:
         label="Set Up Custom Key Binding", command=lambda: custom_keyboard(key_change_bool[0]))
     dropdown_settings.add_command(
         label="Reset Default qwerty Keybindings", command=lambda: reset_default_kb(key_change_bool[0]))
+    dropdown_settings.add_command(label='Open Midi Port', command=choose_port)
     menu_bar.add_cascade(label="settings", menu=dropdown_settings)
     master.config(menu=menu_bar)
 
@@ -559,6 +664,8 @@ try:
         master, text='Key of E4', bg="#000000", fg="white", command=change_key)
     trem_button = tk.Button(master, bg="#000000", fg="white", text='tremolo',
                             width=7, command=toggle_trem)
+    update_sliders_button = tk.Button(master, text="Apply Slider Changes",
+                                      bg="#728C00", fg="white", width=18, command=do_it)
     close_button = tk.Button(master, text='Close', width=7, command=stop_it)
 
     scale_duration.set(1.0)
@@ -586,6 +693,7 @@ try:
     scale_trem.grid(row=6, column=1)
     trem_button.grid(row=6, column=2, padx=20)
     key_change_button.grid(row=2, column=2, padx=20)
+    update_sliders_button.grid(row=7, column=1, sticky='W')
     close_button.grid(row=7, column=2, padx=20, pady=20)
 
     attak_label.grid(row=0, column=3)
