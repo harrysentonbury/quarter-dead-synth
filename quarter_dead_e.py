@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Copyright (C) 2020 Harry Sentonbury
+# GNU General Public License v3.0
+
 import numpy as np
 import simpleaudio as sa
 from concurrent.futures import ThreadPoolExecutor
