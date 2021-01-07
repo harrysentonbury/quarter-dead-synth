@@ -46,8 +46,8 @@ sudo apt-get install python-tk
 
 **Note:-** This is a quick and dirty orrible synth and not all computers are going
 to deliver the goods in pristine condition. If this is the case,
-try the [Emergency-version](Emergency-version/) pictured below. But if it
-does deliver, the overwhelming beauty of the sound will strike your heart and
+try the [Emergency-version](Emergency-version/) pictured below, (It has midi port too.) 
+But if it does deliver, the overwhelming beauty of the sound will strike your heart and
 produce tears in your eyes.
 
 ![qdgui-layout](images/eqds_tr0.jpg)
